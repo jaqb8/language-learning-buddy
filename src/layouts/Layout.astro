@@ -20,6 +20,14 @@ const { title = "Language Learning Buddy" } = Astro.props;
       name="description"
       content="Language Learning Buddy - Narzędzie do nauki języka angielskiego z analizą błędów gramatycznych przez AI"
     />
+    <meta property="og:title" content={title} />
+    <meta
+      property="og:description"
+      content="Language Learning Buddy - Narzędzie do nauki języka angielskiego z analizą błędów gramatycznych przez AI"
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://language-learning-buddy.pl" />
     <title>{title}</title>
     <script is:inline>
       const getThemePreference = () => {
