@@ -27,13 +27,14 @@ describe("AnalysisCacheService", () => {
     const service = new AnalysisCacheService(mockSupabase as never);
 
     const result = await service.get("  Test text  ", "grammar_and_spelling");
-    const textHash = await (service as unknown as { hashText: (text: string) => Promise<string> }).hashText(
+    const textHash = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText(
       "Test text"
     );
 
+    expect(textHash).not.toBeNull();
     expect(result).toEqual(cachedResult);
     expect(mockSupabase.rpc).toHaveBeenCalledWith("get_cached_analysis", {
-      p_text_hash: textHash,
+      p_text_hash: textHash as string,
       p_mode: "grammar_and_spelling",
     });
   });
@@ -63,12 +64,13 @@ describe("AnalysisCacheService", () => {
     };
 
     await service.set("  I are student  ", "grammar_and_spelling", result);
-    const textHash = await (service as unknown as { hashText: (text: string) => Promise<string> }).hashText(
+    const textHash = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText(
       "I are student"
     );
 
+    expect(textHash).not.toBeNull();
     expect(mockSupabase.rpc).toHaveBeenCalledWith("set_cached_analysis", {
-      p_text_hash: textHash,
+      p_text_hash: textHash as string,
       p_mode: "grammar_and_spelling",
       p_original_text: "I are student",
       p_result: result,
@@ -80,9 +82,13 @@ describe("AnalysisCacheService", () => {
       rpc: vi.fn(),
     };
     const service = new AnalysisCacheService(mockSupabase as never);
-    const hashA = await (service as unknown as { hashText: (text: string) => Promise<string> }).hashText(" Test ");
-    const hashB = await (service as unknown as { hashText: (text: string) => Promise<string> }).hashText("Test");
+    const hashA = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText(
+      " Test "
+    );
+    const hashB = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText("Test");
 
+    expect(hashA).not.toBeNull();
+    expect(hashB).not.toBeNull();
     expect(hashA).toBe(hashB);
   });
 });
