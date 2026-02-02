@@ -44,7 +44,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const { text, mode, analysisContext } = validationResult.data;
 
-    const result = await new AnalysisService().analyzeText(text, mode, analysisContext);
+    const result = await new AnalysisService(locals.supabase).analyzeText(text, mode, analysisContext);
 
     if (locals.user) {
       let pointsEnabled = false;
