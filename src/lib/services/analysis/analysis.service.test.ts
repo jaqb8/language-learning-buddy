@@ -136,3 +136,48 @@ describe("AnalysisService - userMessage building", () => {
     expect(callArgs.userMessage).toContain(analysisContext);
   });
 });
+
+describe("AnalysisService - cache integration", () => {
+  const mockResponse: TextAnalysisDto = {
+    is_correct: true,
+    original_text: "Test text",
+    translation: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should skip cache when analysisContext is provided", async () => {
+    const mockSupabase = {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const service = new AnalysisService(mockSupabase as never);
+
+    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+
+    await service.analyzeText("I am a student.", "grammar_and_spelling", "Piszę email do mojego szefa");
+
+    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return cached result when context is missing", async () => {
+    const cachedResult: TextAnalysisDto = {
+      is_correct: false,
+      original_text: "I are student",
+      corrected_text: "I am a student",
+      explanation: "Subject-verb agreement.",
+      translation: null,
+    };
+    const mockSupabase = {
+      rpc: vi.fn().mockResolvedValue({ data: cachedResult, error: null }),
+    };
+    const service = new AnalysisService(mockSupabase as never);
+
+    const result = await service.analyzeText("I are student", "grammar_and_spelling");
+
+    expect(result).toEqual(cachedResult);
+    expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+  });
+});
