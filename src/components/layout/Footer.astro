@@ -4,6 +4,8 @@ import pkg from "../../../package.json";
 const version = pkg.version;
 const githubUrl = "https://github.com/jaqb8/10xdevs-project";
 const releaseUrl = `${githubUrl}/releases/tag/v${version}`;
+
+let currentYear = new Date().getFullYear();
 ---
 
 <footer class="border-t bg-muted/20 md:mt-auto mt-16">
@@ -33,7 +35,7 @@ const releaseUrl = `${githubUrl}/releases/tag/v${version}`;
         target="_blank"
         rel="noopener noreferrer"
         class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >© 2025 Jakub Aniszewski IT Solutions. All rights reserved.</a
+        >© {currentYear} Jakub Aniszewski IT Solutions. All rights reserved.</a
       >
       <div class="flex items-center gap-3">
         <a
