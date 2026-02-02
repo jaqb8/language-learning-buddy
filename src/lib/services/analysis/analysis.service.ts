@@ -18,6 +18,8 @@ import {
   AnalysisNetworkError,
   AnalysisUnknownError,
 } from "./analysis.errors";
+import type { SupabaseClient } from "../../../db/supabase.client";
+import { AnalysisCacheService } from "./analysis-cache.service";
 import { z } from "zod";
 import grammarPrompt from "@/lib/prompts/grammar-analysis.prompt.md?raw";
 import colloquialPrompt from "@/lib/prompts/colloquial-speech.prompt.md?raw";
@@ -45,9 +47,11 @@ const ANALYSIS_PROMPTS: Record<AnalysisMode, string> = {
 
 export class AnalysisService {
   private useMocks: boolean;
+  private cacheService?: AnalysisCacheService;
 
-  constructor() {
+  constructor(supabase?: SupabaseClient) {
     this.useMocks = USE_MOCKS;
+    this.cacheService = supabase ? new AnalysisCacheService(supabase) : undefined;
   }
 
   async analyzeText(text: string, mode: AnalysisMode, analysisContext?: string): Promise<TextAnalysisDto> {
@@ -65,10 +69,23 @@ export class AnalysisService {
 
   private async analyzeWithAI(text: string, mode: AnalysisMode, analysisContext?: string): Promise<TextAnalysisDto> {
     const systemPrompt = ANALYSIS_PROMPTS[mode];
+    const trimmedContext = analysisContext?.trim();
+    const shouldUseCache = !trimmedContext && this.cacheService;
+
+    if (shouldUseCache) {
+      try {
+        const cachedResult = await this.cacheService?.get(text, mode);
+        if (cachedResult) {
+          return cachedResult;
+        }
+      } catch (error) {
+        console.error("Cache lookup failed:", error);
+      }
+    }
 
     let userMessage: string;
-    if (analysisContext?.trim()) {
-      userMessage = `Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${analysisContext.trim()}`;
+    if (trimmedContext) {
+      userMessage = `Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${trimmedContext}`;
     } else {
       userMessage = text;
     }
@@ -83,10 +100,20 @@ export class AnalysisService {
         maxTokens: 1000,
       });
 
-      return {
+      const normalizedResult = {
         ...result,
         translation: result.translation ?? null,
       };
+
+      if (shouldUseCache) {
+        try {
+          await this.cacheService?.set(text, mode, normalizedResult);
+        } catch (error) {
+          console.error("Cache save failed:", error);
+        }
+      }
+
+      return normalizedResult;
     } catch (error) {
       if (error instanceof OpenRouterConfigurationError) {
         console.error("OpenRouter configuration error:", error.message);

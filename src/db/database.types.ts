@@ -25,6 +25,39 @@ export interface Database {
   };
   public: {
     Tables: {
+      analysis_cache: {
+        Row: {
+          analysis_mode: string;
+          created_at: string;
+          hit_count: number;
+          id: string;
+          last_accessed_at: string;
+          original_text: string;
+          result: Json;
+          text_hash: string;
+        };
+        Insert: {
+          analysis_mode: string;
+          created_at?: string;
+          hit_count?: number;
+          id?: string;
+          last_accessed_at?: string;
+          original_text: string;
+          result: Json;
+          text_hash: string;
+        };
+        Update: {
+          analysis_mode?: string;
+          created_at?: string;
+          hit_count?: number;
+          id?: string;
+          last_accessed_at?: string;
+          original_text?: string;
+          result?: Json;
+          text_hash?: string;
+        };
+        Relationships: [];
+      };
       anonymous_daily_usage: {
         Row: {
           ip_hash: string;
@@ -124,6 +157,7 @@ export interface Database {
     };
     Views: Record<never, never>;
     Functions: {
+      cleanup_expired_cache: { Args: never; Returns: number };
       get_analysis_stats: {
         Args: never;
         Returns: {
@@ -131,6 +165,7 @@ export interface Database {
           total_analyses: number;
         }[];
       };
+      get_cached_analysis: { Args: { p_text_hash: string; p_mode: string }; Returns: Json };
       get_anonymous_quota_status: {
         Args: { p_ip_hash: string; p_usage_date: string };
         Returns: number;
@@ -154,6 +189,10 @@ export interface Database {
         }[];
       };
       reset_analysis_stats: { Args: never; Returns: undefined };
+      set_cached_analysis: {
+        Args: { p_text_hash: string; p_mode: string; p_original_text: string; p_result: Json };
+        Returns: undefined;
+      };
       upsert_user_settings: {
         Args: { p_context_enabled?: boolean; p_points_enabled?: boolean };
         Returns: {
