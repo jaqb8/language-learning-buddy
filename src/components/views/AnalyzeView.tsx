@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { useTextAnalysis } from "../../lib/hooks/useTextAnalysis";
 import { useAnalysisModeStore } from "../../lib/stores/analysis-mode.store";
 import { usePendingAnalysisStore } from "../../lib/stores/pending-analysis.store";
@@ -10,8 +10,9 @@ import { formatResetTime } from "../../lib/utils";
 import { AnalysisForm } from "../features/AnalysisForm";
 import { Skeleton } from "../ui/skeleton";
 import { AnalysisResult } from "../features/AnalysisResult";
-import { toast } from "sonner";
 import type { CreateLearningItemCommand } from "../../types";
+import { buildAnalyzeViewModel } from "./analyze/analyzeView.model";
+import { useAnalyzeViewEffects } from "./analyze/useAnalyzeViewEffects";
 
 const MAX_TEXT_LENGTH = 500;
 
@@ -23,65 +24,33 @@ export function AnalyzeView() {
   const incrementStats = usePointsStore((state) => state.incrementStats);
   const { pointsEnabled: pointsSettingEnabled, contextEnabled, isLoaded } = useSettingsStore();
   const gamificationFeatureEnabled = isFeatureEnabled("gamification");
-  const lastResultRef = useRef<number | null>(null);
-  const isPointsAwardingEnabled = !isLoaded || pointsSettingEnabled;
-  const isContextEnabled = !isLoaded || contextEnabled;
-  const shouldShowSettingsSkeleton = isAuth && !isLoaded;
 
-  useEffect(() => {
-    if (state.error) {
-      toast.error(state.error);
-    }
-  }, [state.error]);
-
-  useEffect(() => {
-    if (
-      gamificationFeatureEnabled &&
-      isPointsAwardingEnabled &&
-      state.result &&
-      isAuth &&
-      state.resultTimestamp &&
-      !state.isRestoredResult
-    ) {
-      if (lastResultRef.current !== state.resultTimestamp) {
-        lastResultRef.current = state.resultTimestamp;
-        incrementStats(state.result.is_correct);
-      }
-    }
-  }, [
-    state.result,
-    state.resultTimestamp,
-    state.isRestoredResult,
+  const vm = buildAnalyzeViewModel({
+    state: { status: state.status, result: state.result },
+    quota,
     isAuth,
-    incrementStats,
+    settings: {
+      isLoaded,
+      pointsEnabled: pointsSettingEnabled,
+      contextEnabled,
+    },
+  });
+
+  useAnalyzeViewEffects({
+    error: state.error,
+    isCurrentResultSaved: state.isCurrentResultSaved,
+    result: state.result,
+    resultTimestamp: state.resultTimestamp,
+    isRestoredResult: state.isRestoredResult,
+    isAuth,
+    analysisContext: state.analysisContext,
+    isContextEnabled: vm.isContextEnabled,
+    setAnalysisContext,
+    clearPendingAnalysis,
     gamificationFeatureEnabled,
-    isPointsAwardingEnabled,
-  ]);
-
-  useEffect(() => {
-    if (!isContextEnabled && state.analysisContext.trim().length > 0) {
-      setAnalysisContext("");
-    }
-  }, [isContextEnabled, state.analysisContext, setAnalysisContext]);
-
-  useEffect(() => {
-    return () => {
-      clearPendingAnalysis();
-    };
-  }, [clearPendingAnalysis]);
-
-  useEffect(() => {
-    if (state.isCurrentResultSaved) {
-      toast.success("Zapisano na liście Do nauki!", {
-        action: {
-          label: "Przejdź do listy",
-          onClick: () => {
-            window.location.href = "/learning-list";
-          },
-        },
-      });
-    }
-  }, [state.isCurrentResultSaved]);
+    isPointsAwardingEnabled: vm.isPointsAwardingEnabled,
+    incrementStats,
+  });
 
   const handleSave = useCallback(
     (command: CreateLearningItemCommand) => {
@@ -100,7 +69,7 @@ export function AnalyzeView() {
       </header>
 
       <section aria-label="Formularz analizy tekstu">
-        {shouldShowSettingsSkeleton ? (
+        {vm.shouldShowSettingsSkeleton ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-5 w-48" />
@@ -120,10 +89,10 @@ export function AnalyzeView() {
             onTextChange={setText}
             onSubmit={() => analyzeText(mode)}
             onClear={clear}
-            isLoading={state.status === "loading"}
-            isAnalyzing={state.status === "loading"}
+            isLoading={vm.isAnalyzing}
+            isAnalyzing={vm.isAnalyzing}
             maxLength={MAX_TEXT_LENGTH}
-            quota={!isAuth ? quota : null}
+            quota={vm.quotaForForm}
             formatResetTime={formatResetTime}
             analysisContext={state.analysisContext}
             onAnalysisContextChange={setAnalysisContext}
@@ -131,17 +100,17 @@ export function AnalyzeView() {
           />
         )}
       </section>
-      {(state.status === "loading" || state.result) && (
+      {vm.showResultSection && (
         <section aria-label="Wyniki analizy" aria-live="polite">
           <AnalysisResult
-            isLoading={state.status === "loading"}
+            isLoading={vm.isAnalyzing}
             analysisResult={state.result}
             isSaved={state.isCurrentResultSaved}
             analysisMode={mode}
             analysisContext={state.analysisContext}
             onSave={handleSave}
             earnedPoint={
-              gamificationFeatureEnabled && isPointsAwardingEnabled && state.result?.is_correct === true && isAuth
+              gamificationFeatureEnabled && vm.isPointsAwardingEnabled && state.result?.is_correct === true && isAuth
             }
           />
         </section>
