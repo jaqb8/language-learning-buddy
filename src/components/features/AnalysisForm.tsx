@@ -60,6 +60,9 @@ export function AnalysisForm({
   const isQuotaExceeded = quota !== null && quota !== undefined && quota.remaining === 0;
   const isDisabled = isLoading || text.trim().length === 0 || isOverLimit || isQuotaExceeded;
   const hasText = text.trim().length > 0;
+  const isClearDisabled = isLoading || isAnalyzing || !hasText;
+  const isContextTriggerDisabled = isAnalyzing || isQuotaExceeded;
+  const isContextTextareaDisabled = isAnalyzing || isQuotaExceeded || !hasText;
 
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -106,6 +109,15 @@ export function AnalysisForm({
       toast.error("Nie udało się skopiować tekstu");
     }
   }, [text]);
+
+  const handleClearClick = useCallback(() => {
+    onClear();
+
+    // Scroll back to the main input after clearing, matching the smooth scroll behavior used for results.
+    const el = document.getElementById("text-input") as HTMLTextAreaElement | null;
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    el?.focus();
+  }, [onClear]);
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" aria-label="Formularz analizy tekstu">
@@ -174,7 +186,8 @@ export function AnalysisForm({
             analysisContext={analysisContext}
             onAnalysisContextChange={onAnalysisContextChange}
             maxLength={maxLength}
-            disabled={isAnalyzing || isQuotaExceeded}
+            triggerDisabled={isContextTriggerDisabled}
+            inputDisabled={isContextTextareaDisabled}
           />
         )}
         <AnalysisModeSelector disabled={isQuotaExceeded} />
@@ -232,8 +245,8 @@ export function AnalysisForm({
         </Button>
         <Button
           type="button"
-          onClick={onClear}
-          disabled={false}
+          onClick={handleClearClick}
+          disabled={isClearDisabled}
           variant="outline"
           className="w-full text-lg"
           size="lg"
