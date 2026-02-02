@@ -1,11 +1,13 @@
 ---
 import pkg from "../../../package.json";
+import { PUBLIC_ENV_NAME } from "astro:env/client";
 
 const version = pkg.version;
 const githubUrl = "https://github.com/jaqb8/10xdevs-project";
 const releaseUrl = `${githubUrl}/releases/tag/v${version}`;
 
 let currentYear = new Date().getFullYear();
+let versionName = PUBLIC_ENV_NAME !== "production" ? `${version}-${PUBLIC_ENV_NAME}` : version;
 ---
 
 <footer class="border-t bg-muted/20 md:mt-auto mt-16">
@@ -45,7 +47,7 @@ let currentYear = new Date().getFullYear();
           aria-label={`Release version ${version}`}
           class="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          v{version}
+          v{versionName}
         </a>
         <a
           href={githubUrl}
