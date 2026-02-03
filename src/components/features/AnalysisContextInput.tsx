@@ -2,20 +2,22 @@ import { useState, useCallback, type ChangeEvent } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Info, ChevronDown, FileText } from "lucide-react";
+import { Info, ChevronDown, FileText, CircleHelp } from "lucide-react";
 
 interface AnalysisContextInputProps {
   analysisContext: string;
   onAnalysisContextChange: (analysisContext: string) => void;
   maxLength: number;
-  disabled?: boolean;
+  triggerDisabled?: boolean;
+  inputDisabled?: boolean;
 }
 
 export function AnalysisContextInput({
   analysisContext,
   onAnalysisContextChange,
   maxLength,
-  disabled = false,
+  triggerDisabled = false,
+  inputDisabled = false,
 }: AnalysisContextInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isOverLimit = analysisContext.length > maxLength;
@@ -40,7 +42,7 @@ export function AnalysisContextInput({
           type="button"
           variant="ghost"
           className="flex w-full items-center justify-between px-4 py-3 font-normal hover:bg-transparent h-auto"
-          disabled={disabled}
+          disabled={triggerDisabled}
           aria-expanded={isOpen}
           aria-controls="analysis-context-content"
         >
@@ -58,7 +60,7 @@ export function AnalysisContextInput({
         id="analysis-context-content"
         className="space-y-2 px-4 pb-4 pt-2 data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden"
       >
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 text-muted-foreground">
           <Info className="size-3 shrink-0" />
           <p className="text-xs text-muted-foreground">
             Podaj dodatkowy kontekst do analizowanego wyrażenia. Zostanie on uwzględniony podczas analizy pod kątem
@@ -70,7 +72,7 @@ export function AnalysisContextInput({
           value={analysisContext}
           onChange={handleContextChange}
           placeholder="Wpisz tutaj dodatkowy kontekst..."
-          disabled={disabled}
+          disabled={inputDisabled}
           rows={4}
           className="text-base"
           aria-describedby="context-char-count context-char-count-helper"
@@ -80,6 +82,17 @@ export function AnalysisContextInput({
           spellCheck="false"
           data-test-id="analysis-context-input"
         />
+        {inputDisabled && (
+          <div
+            className="flex items-center gap-1 text-xs"
+            role="note"
+            aria-live="polite"
+            data-test-id="analysis-context-disabled-hint"
+          >
+            <CircleHelp className="size-3 shrink-0" aria-hidden="true" />
+            <p>Podaj treść analizy, aby dodać dodatkowy kontekst</p>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           <p id="context-char-count-helper" className="text-destructive text-xs">
             {isOverLimit && "Przekroczono limit znaków. "}
@@ -90,7 +103,7 @@ export function AnalysisContextInput({
                 type="button"
                 variant="outline"
                 onClick={handleClear}
-                disabled={disabled}
+                disabled={inputDisabled}
                 className="h-6"
                 aria-label="Wyczyść kontekst"
                 data-test-id="clear-context-button"
@@ -98,14 +111,16 @@ export function AnalysisContextInput({
                 Wyczyść
               </Button>
             )}
-            <p
-              id="context-char-count"
-              className={`text-sm font-medium tabular-nums ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}
-              aria-live="polite"
-              role="status"
-            >
-              {analysisContext.length} / {maxLength}
-            </p>
+            {!inputDisabled && (
+              <p
+                id="context-char-count"
+                className={`text-sm font-medium tabular-nums ${isOverLimit ? "text-destructive" : "text-muted-foreground"}`}
+                aria-live="polite"
+                role="status"
+              >
+                {analysisContext.length} / {maxLength}
+              </p>
+            )}
           </div>
         </div>
       </CollapsibleContent>

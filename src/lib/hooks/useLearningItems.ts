@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type {
   LearningItemDto,
   LearningItemViewModel,
@@ -43,6 +43,54 @@ interface UseLearningItemsReturn {
   cancelDelete: () => void;
 }
 
+interface State {
+  data: PaginatedResponseDto<LearningItemDto> | null;
+  isLoading: boolean;
+  error: string | null;
+  page: number;
+  isDeleting: boolean;
+  itemToDelete: LearningItemDto | null;
+}
+
+type Action =
+  | { type: "SET_PAGE"; page: number }
+  | { type: "FETCH_PAGE_REQUEST" }
+  | { type: "FETCH_PAGE_SUCCESS"; data: PaginatedResponseDto<LearningItemDto> }
+  | { type: "FETCH_PAGE_ERROR"; error: string }
+  | { type: "OPEN_DELETE_DIALOG"; item: LearningItemDto }
+  | { type: "CLOSE_DELETE_DIALOG" }
+  | { type: "DELETE_REQUEST" }
+  | { type: "DELETE_SUCCESS" }
+  | { type: "DELETE_ERROR"; error: string };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_PAGE":
+      return { ...state, page: action.page };
+    case "FETCH_PAGE_REQUEST":
+      return { ...state, isLoading: true, error: null };
+    case "FETCH_PAGE_SUCCESS":
+      return { ...state, isLoading: false, data: action.data };
+    case "FETCH_PAGE_ERROR":
+      return { ...state, isLoading: false, error: action.error };
+    case "OPEN_DELETE_DIALOG":
+      return { ...state, itemToDelete: action.item };
+    case "CLOSE_DELETE_DIALOG":
+      return { ...state, itemToDelete: null };
+    case "DELETE_REQUEST":
+      return { ...state, isDeleting: true, error: null };
+    case "DELETE_SUCCESS":
+      return { ...state, isDeleting: false, itemToDelete: null };
+    case "DELETE_ERROR":
+      return { ...state, isDeleting: false, itemToDelete: null, error: action.error };
+    default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _exhaustiveCheck: never = action;
+      return state;
+    }
+  }
+}
+
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("pl-PL", {
@@ -71,100 +119,117 @@ function mapToPaginationViewModel(
 
 export function useLearningItems(options: UseLearningItemsOptions = {}): UseLearningItemsReturn {
   const { initialData = null } = options;
+
   const hasInitialData = initialData !== null;
-  const usedInitialDataRef = useRef(false);
 
-  const [data, setData] = useState<PaginatedResponseDto<LearningItemDto> | null>(initialData);
-  const [isLoading, setIsLoading] = useState(!hasInitialData);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [itemToDelete, setItemToDelete] = useState<LearningItemDto | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [state, dispatch] = useReducer(reducer, {
+    data: initialData,
+    isLoading: !hasInitialData,
+    error: null,
+    page: 1,
+    isDeleting: false,
+    itemToDelete: null,
+  });
 
-  const fetchItems = useCallback(async (currentPage: number) => {
-    setIsLoading(true);
-    setError(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const hasUsedInitialDataRef = useRef(false);
+
+  const fetchItems = useCallback(async (currentPage: number, signal?: AbortSignal) => {
+    dispatch({ type: "FETCH_PAGE_REQUEST" });
 
     try {
-      const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`);
+      const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`, { signal });
 
       if (!response.ok) {
         const errorData: ApiErrorResponse = await response.json();
         const errorMessage = mapErrorCodeToMessage(errorData.error_code);
-        setError(errorMessage);
+        dispatch({ type: "FETCH_PAGE_ERROR", error: errorMessage });
         return;
       }
 
       const result: PaginatedResponseDto<LearningItemDto> = await response.json();
-      setData(result);
+      dispatch({ type: "FETCH_PAGE_SUCCESS", data: result });
     } catch (err) {
+      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
+        return;
+      }
       console.error("Network error during fetch:", err);
-      setError("Coś poszło nie tak. Spróbuj ponownie za chwilę.");
-    } finally {
-      setIsLoading(false);
+      dispatch({ type: "FETCH_PAGE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
     }
   }, []);
 
   useEffect(() => {
-    if (hasInitialData && !usedInitialDataRef.current && page === 1) {
-      usedInitialDataRef.current = true;
+    // Skip only the very first fetch on page 1 if we have initial data from SSR
+    if (hasInitialData && state.page === 1 && !hasUsedInitialDataRef.current) {
+      hasUsedInitialDataRef.current = true;
       return;
     }
 
-    fetchItems(page);
-  }, [page, fetchItems, hasInitialData]);
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    fetchItems(state.page, controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [state.page, fetchItems, hasInitialData]);
 
   const handleSetPage = useCallback((newPage: number) => {
-    setPage(newPage);
+    dispatch({ type: "SET_PAGE", page: newPage });
   }, []);
 
   const deleteItem = useCallback((item: LearningItemDto) => {
-    setItemToDelete(item);
+    dispatch({ type: "OPEN_DELETE_DIALOG", item });
   }, []);
 
   const confirmDelete = useCallback(async () => {
-    if (!itemToDelete) return;
+    if (!state.itemToDelete) return;
 
-    setIsDeleting(true);
+    dispatch({ type: "DELETE_REQUEST" });
 
     try {
-      const response = await fetch(`/api/learning-items/${itemToDelete.id}`, {
+      const response = await fetch(`/api/learning-items/${state.itemToDelete.id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData: ApiErrorResponse = await response.json();
         const errorMessage = mapErrorCodeToMessage(errorData.error_code);
-        setError(errorMessage);
-        setItemToDelete(null);
+        dispatch({ type: "DELETE_ERROR", error: errorMessage });
         return;
       }
 
-      setItemToDelete(null);
-      await fetchItems(page);
+      dispatch({ type: "DELETE_SUCCESS" });
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      await fetchItems(state.page, controller.signal);
     } catch (err) {
       console.error("Network error during delete:", err);
-      setError("Coś poszło nie tak. Spróbuj ponownie za chwilę.");
-      setItemToDelete(null);
-    } finally {
-      setIsDeleting(false);
+      dispatch({ type: "DELETE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
     }
-  }, [itemToDelete, page, fetchItems]);
+  }, [state.itemToDelete, state.page, fetchItems]);
 
   const cancelDelete = useCallback(() => {
-    setItemToDelete(null);
+    dispatch({ type: "CLOSE_DELETE_DIALOG" });
   }, []);
 
-  const viewModels = data?.data.map(mapToViewModel) ?? [];
-  const paginationViewModel = data?.pagination ? mapToPaginationViewModel(data.pagination) : null;
+  const viewModels = useMemo(() => state.data?.data.map(mapToViewModel) ?? [], [state.data]);
+  const paginationViewModel = useMemo(
+    () => (state.data?.pagination ? mapToPaginationViewModel(state.data.pagination) : null),
+    [state.data]
+  );
 
   return {
     viewModels,
     paginationViewModel,
-    isLoading,
-    error,
-    isDeleting,
-    isDeleteDialogOpen: itemToDelete !== null,
+    isLoading: state.isLoading,
+    error: state.error,
+    isDeleting: state.isDeleting,
+    isDeleteDialogOpen: state.itemToDelete !== null,
     setPage: handleSetPage,
     deleteItem,
     confirmDelete,

@@ -13,4 +13,3 @@
 
 - Updated pull request workflow to include check for left-over console log statements
 - Enhanced daily quota handling with improved error responses
-

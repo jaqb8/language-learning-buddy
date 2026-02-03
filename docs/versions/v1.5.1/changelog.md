@@ -9,4 +9,3 @@
 ## Changed
 
 - Updated prompts for translation requirements in colloquial and grammar analysis modes
-
