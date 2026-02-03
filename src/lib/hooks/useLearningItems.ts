@@ -50,11 +50,9 @@ interface State {
   page: number;
   isDeleting: boolean;
   itemToDelete: LearningItemDto | null;
-  didHydrateInitialData: boolean;
 }
 
 type Action =
-  | { type: "HYDRATE_INITIAL_DATA" }
   | { type: "SET_PAGE"; page: number }
   | { type: "FETCH_PAGE_REQUEST" }
   | { type: "FETCH_PAGE_SUCCESS"; data: PaginatedResponseDto<LearningItemDto> }
@@ -67,8 +65,6 @@ type Action =
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "HYDRATE_INITIAL_DATA":
-      return { ...state, didHydrateInitialData: true };
     case "SET_PAGE":
       return { ...state, page: action.page };
     case "FETCH_PAGE_REQUEST":
@@ -133,10 +129,10 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
     page: 1,
     isDeleting: false,
     itemToDelete: null,
-    didHydrateInitialData: hasInitialData,
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const hasUsedInitialDataRef = useRef(false);
 
   const fetchItems = useCallback(async (currentPage: number, signal?: AbortSignal) => {
     dispatch({ type: "FETCH_PAGE_REQUEST" });
@@ -163,7 +159,9 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
   }, []);
 
   useEffect(() => {
-    if (state.didHydrateInitialData && state.page === 1) {
+    // Skip only the very first fetch on page 1 if we have initial data from SSR
+    if (hasInitialData && state.page === 1 && !hasUsedInitialDataRef.current) {
+      hasUsedInitialDataRef.current = true;
       return;
     }
 
@@ -176,7 +174,7 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
     return () => {
       controller.abort();
     };
-  }, [state.page, fetchItems, state.didHydrateInitialData]);
+  }, [state.page, fetchItems, hasInitialData]);
 
   const handleSetPage = useCallback((newPage: number) => {
     dispatch({ type: "SET_PAGE", page: newPage });
