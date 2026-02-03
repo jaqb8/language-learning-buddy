@@ -33,10 +33,10 @@ isProject: false
 ```mermaid
 flowchart TD
     A[POST /api/analyze] --> B{Has context?}
-    
+
     B -->|Yes| F1[Call OpenRouter]
     F1 --> H1[Return result]
-    
+
     B -->|No| C[Check cache]
     C --> DB[(analysis_cache)]
     DB --> D{Cache hit?}
@@ -79,11 +79,7 @@ export class AnalysisCacheService {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async get(text: string, mode: AnalysisMode): Promise<TextAnalysisDto | null>;
-  async set(
-    text: string,
-    mode: AnalysisMode,
-    result: TextAnalysisDto,
-  ): Promise<void>;
+  async set(text: string, mode: AnalysisMode, result: TextAnalysisDto): Promise<void>;
 
   private hashText(text: string): string; // SHA256
 }

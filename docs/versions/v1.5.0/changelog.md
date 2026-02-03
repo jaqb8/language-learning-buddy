@@ -12,4 +12,3 @@
 ## Changed
 
 - Simplified secure cookie option logic in Supabase client
-
