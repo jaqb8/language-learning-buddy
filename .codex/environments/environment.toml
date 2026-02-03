@@ -3,4 +3,4 @@ version = 1
 name = "language-learning-buddy"
 
 [setup]
-script = "npm install"
+script = "npm ci"
