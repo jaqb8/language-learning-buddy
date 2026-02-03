@@ -48,4 +48,3 @@ export class SessionStorageHelper {
     return data !== null;
   }
 }
-

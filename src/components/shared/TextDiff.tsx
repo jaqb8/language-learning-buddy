@@ -14,10 +14,7 @@ interface TextDiffProps {
 export function TextDiff({ originalText, correctedText, translation }: TextDiffProps) {
   const [showTranslation, setShowTranslation] = useState(false);
 
-  const segments = useMemo(
-    () => buildTextDiffSegments({ originalText, correctedText }),
-    [originalText, correctedText]
-  );
+  const segments = useMemo(() => buildTextDiffSegments({ originalText, correctedText }), [originalText, correctedText]);
 
   return (
     <div
@@ -37,10 +34,7 @@ export function TextDiff({ originalText, correctedText, translation }: TextDiffP
             <h4 className="text-sm font-semibold text-muted-foreground">Poprawiony tekst:</h4>
             <div className="flex items-center gap-2">
               {translation && (
-                <TranslationToggle
-                  isVisible={showTranslation}
-                  onToggle={() => setShowTranslation((prev) => !prev)}
-                />
+                <TranslationToggle isVisible={showTranslation} onToggle={() => setShowTranslation((prev) => !prev)} />
               )}
               <CopyCorrectedTextButton correctedText={correctedText} />
             </div>
