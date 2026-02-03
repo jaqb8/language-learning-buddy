@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type {
   LearningItemDto,
   LearningItemViewModel,
@@ -136,11 +136,13 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
     didHydrateInitialData: hasInitialData,
   });
 
-  const fetchItems = useCallback(async (currentPage: number) => {
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const fetchItems = useCallback(async (currentPage: number, signal?: AbortSignal) => {
     dispatch({ type: "FETCH_PAGE_REQUEST" });
 
     try {
-      const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`);
+      const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`, { signal });
 
       if (!response.ok) {
         const errorData: ApiErrorResponse = await response.json();
@@ -152,6 +154,9 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
       const result: PaginatedResponseDto<LearningItemDto> = await response.json();
       dispatch({ type: "FETCH_PAGE_SUCCESS", data: result });
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
       console.error("Network error during fetch:", err);
       dispatch({ type: "FETCH_PAGE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
     }
@@ -162,7 +167,15 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
       return;
     }
 
-    fetchItems(state.page);
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    fetchItems(state.page, controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [state.page, fetchItems, state.didHydrateInitialData]);
 
   const handleSetPage = useCallback((newPage: number) => {
