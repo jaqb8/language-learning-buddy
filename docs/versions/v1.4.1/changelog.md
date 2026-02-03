@@ -9,4 +9,3 @@
 ## Changed
 
 - **Daily Quota Management**: Enhanced daily analysis quota management implementation for unauthenticated users
-

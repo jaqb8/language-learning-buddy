@@ -43,7 +43,7 @@ interface UseLearningItemsReturn {
   cancelDelete: () => void;
 }
 
-type State = {
+interface State {
   data: PaginatedResponseDto<LearningItemDto> | null;
   isLoading: boolean;
   error: string | null;
@@ -51,7 +51,7 @@ type State = {
   isDeleting: boolean;
   itemToDelete: LearningItemDto | null;
   didHydrateInitialData: boolean;
-};
+}
 
 type Action =
   | { type: "HYDRATE_INITIAL_DATA" }

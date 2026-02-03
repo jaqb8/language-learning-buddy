@@ -88,7 +88,7 @@ RETURNS integer AS $$
   INSERT INTO user_points (user_id, points, updated_at)
   VALUES (target_user_id, 1, now())
   ON CONFLICT (user_id)
-  DO UPDATE SET 
+  DO UPDATE SET
     points = user_points.points + 1,
     updated_at = now()
   RETURNING points;
