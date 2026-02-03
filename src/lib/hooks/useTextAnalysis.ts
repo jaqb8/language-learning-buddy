@@ -178,14 +178,14 @@ export function useTextAnalysis() {
       dispatch({
         type: "RESTORE_PENDING",
         payload: {
-        status: "success",
-        text: pendingAnalysis.originalText,
-        analysisContext: pendingAnalysis.analysisContext ?? "",
-        result: pendingAnalysis.result,
-        resultTimestamp: pendingAnalysis.timestamp ?? null,
-        isRestoredResult: true,
-        error: null,
-        isCurrentResultSaved: false,
+          status: "success",
+          text: pendingAnalysis.originalText,
+          analysisContext: pendingAnalysis.analysisContext ?? "",
+          result: pendingAnalysis.result,
+          resultTimestamp: pendingAnalysis.timestamp ?? null,
+          isRestoredResult: true,
+          error: null,
+          isCurrentResultSaved: false,
         },
       });
 
@@ -196,7 +196,6 @@ export function useTextAnalysis() {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete("restoreAnalysis");
       window.history.replaceState({}, "", newUrl.toString());
-
     } catch (error) {
       console.error("Error restoring analysis state:", error);
       clearPendingAnalysis();
