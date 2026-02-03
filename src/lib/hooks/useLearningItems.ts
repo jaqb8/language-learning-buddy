@@ -154,7 +154,7 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
       const result: PaginatedResponseDto<LearningItemDto> = await response.json();
       dispatch({ type: "FETCH_PAGE_SUCCESS", data: result });
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
+      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
         return;
       }
       console.error("Network error during fetch:", err);
@@ -204,7 +204,11 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
       }
 
       dispatch({ type: "DELETE_SUCCESS" });
-      await fetchItems(state.page);
+
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      await fetchItems(state.page, controller.signal);
     } catch (err) {
       console.error("Network error during delete:", err);
       dispatch({ type: "DELETE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
