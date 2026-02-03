@@ -87,6 +87,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, isDeleting: false, itemToDelete: null };
     case "DELETE_ERROR":
       return { ...state, isDeleting: false, itemToDelete: null, error: action.error };
+    default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _exhaustiveCheck: never = action;
+      return state;
+    }
   }
 }
 
@@ -128,7 +133,7 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
     page: 1,
     isDeleting: false,
     itemToDelete: null,
-    didHydrateInitialData: false,
+    didHydrateInitialData: hasInitialData,
   });
 
   const fetchItems = useCallback(async (currentPage: number) => {
@@ -153,13 +158,12 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
   }, []);
 
   useEffect(() => {
-    if (hasInitialData && !state.didHydrateInitialData && state.page === 1) {
-      dispatch({ type: "HYDRATE_INITIAL_DATA" });
+    if (state.didHydrateInitialData && state.page === 1) {
       return;
     }
 
     fetchItems(state.page);
-  }, [state.page, fetchItems, hasInitialData, state.didHydrateInitialData]);
+  }, [state.page, fetchItems, state.didHydrateInitialData]);
 
   const handleSetPage = useCallback((newPage: number) => {
     dispatch({ type: "SET_PAGE", page: newPage });
