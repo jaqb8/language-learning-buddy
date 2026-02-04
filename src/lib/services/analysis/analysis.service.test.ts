@@ -6,6 +6,17 @@ vi.mock("../openrouter", () => ({
   openRouterService: {
     getChatCompletion: vi.fn(),
   },
+  aiModelConfigService: {
+    getModelName: vi.fn().mockReturnValue("x-ai/grok-4.1-fast"),
+    getTemperature: vi.fn().mockReturnValue(0.3),
+    getMaxTokens: vi.fn().mockReturnValue(1000),
+  },
+  OpenRouterConfigurationError: class OpenRouterConfigurationError extends Error {},
+  OpenRouterAuthenticationError: class OpenRouterAuthenticationError extends Error {},
+  OpenRouterRateLimitError: class OpenRouterRateLimitError extends Error {},
+  OpenRouterInvalidRequestError: class OpenRouterInvalidRequestError extends Error {},
+  OpenRouterResponseValidationError: class OpenRouterResponseValidationError extends Error {},
+  OpenRouterNetworkError: class OpenRouterNetworkError extends Error {},
 }));
 
 vi.mock("astro:env/server", () => ({

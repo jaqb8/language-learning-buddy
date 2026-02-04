@@ -1,6 +1,6 @@
 import type { AnalysisMode, TextAnalysisDto } from "../../../types";
 import { getMockAnalysis } from "./analysis.mocks";
-import { openRouterService } from "../openrouter";
+import { openRouterService, aiModelConfigService } from "../openrouter";
 import {
   OpenRouterConfigurationError,
   OpenRouterAuthenticationError,
@@ -92,12 +92,10 @@ export class AnalysisService {
 
     try {
       const result = await openRouterService.getChatCompletion({
-        model: "x-ai/grok-4.1-fast",
+        model: aiModelConfigService.getModelName(),
         systemMessage: systemPrompt,
         userMessage,
         responseSchema: TextAnalysisSchema,
-        temperature: 0.3,
-        maxTokens: 1000,
       });
 
       const normalizedResult = {
