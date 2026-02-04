@@ -92,7 +92,7 @@ export class AnalysisService {
 
     try {
       const result = await openRouterService.getChatCompletion({
-        model: "x-ai/grok-4-fast",
+        model: "x-ai/grok-4.1-fast",
         systemMessage: systemPrompt,
         userMessage,
         responseSchema: TextAnalysisSchema,
