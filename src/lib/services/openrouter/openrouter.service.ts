@@ -15,6 +15,7 @@ import type {
   OpenRouterRequestBody,
   OpenRouterResponse,
 } from "./openrouter.types";
+import type { AIModelConfigService } from "../config/ai-model-config.service";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOKENS_LIMIT = 4096;
@@ -23,8 +24,14 @@ export class OpenRouterService {
   private readonly apiKey: string;
   private readonly siteUrl: string;
   private readonly appName: string;
+  private readonly aiModelConfig: AIModelConfigService;
 
-  constructor(config: { apiKey: string; siteUrl: string; appName: string }) {
+  constructor(config: {
+    apiKey: string;
+    siteUrl: string;
+    appName: string;
+    aiModelConfig: AIModelConfigService;
+  }) {
     if (!config.apiKey) {
       console.error("No OpenRouter API key provided.");
       throw new OpenRouterConfigurationError();
@@ -32,6 +39,7 @@ export class OpenRouterService {
     this.apiKey = config.apiKey;
     this.siteUrl = config.siteUrl;
     this.appName = config.appName;
+    this.aiModelConfig = config.aiModelConfig;
   }
 
   async getChatCompletion<T>(params: ChatCompletionParams<T>): Promise<T> {
@@ -101,6 +109,9 @@ export class OpenRouterService {
       name: "response",
     });
 
+    const temperature = params.temperature ?? this.aiModelConfig.getTemperature();
+    const maxTokens = params.maxTokens ?? this.aiModelConfig.getMaxTokens();
+
     const requestBody: OpenRouterRequestBody = {
       model: params.model,
       messages,
@@ -115,15 +126,9 @@ export class OpenRouterService {
           schema: jsonSchema,
         },
       },
+      temperature,
+      max_tokens: maxTokens,
     };
-
-    if (params.temperature !== undefined) {
-      requestBody.temperature = params.temperature;
-    }
-
-    if (params.maxTokens !== undefined) {
-      requestBody.max_tokens = params.maxTokens;
-    }
 
     return requestBody;
   }

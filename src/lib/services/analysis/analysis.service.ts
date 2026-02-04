@@ -96,8 +96,6 @@ export class AnalysisService {
         systemMessage: systemPrompt,
         userMessage,
         responseSchema: TextAnalysisSchema,
-        temperature: 0.3,
-        maxTokens: 1000,
       });
 
       const normalizedResult = {

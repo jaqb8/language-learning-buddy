@@ -12,11 +12,13 @@ The user can provide version in one of three ways:
 2. **Semver bump type** (`major`, `minor`, `patch`) - calculate new version based on the latest release
 3. **No version provided** - use the latest release version from GitHub
 
-To get the latest release, use GitHub MCP:
+To get the latest release, use GitHub CLI:
 
+```bash
+gh release view --json tagName --jq .tagName
 ```
-mcp_github_get_latest_release(owner: "jaqb8", repo: "language-learning-buddy")
-```
+
+This returns the latest release tag (e.g., `v1.2.3`).
 
 ### Calculating version from semver bump type
 
