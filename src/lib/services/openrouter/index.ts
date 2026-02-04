@@ -1,5 +1,5 @@
 import { OpenRouterService } from "./openrouter.service";
-import { AIModelConfigService } from "../config/ai-model-config.service";
+import { AIModelConfigService } from "../ai-config/ai-model-config.service";
 import {
   OPENROUTER_API_KEY,
   ASTRO_SITE,
@@ -10,10 +10,10 @@ import {
   AI_MAX_TOKENS,
 } from "astro:env/server";
 
-const aiModelConfigService = new AIModelConfigService(
+export const aiModelConfigService = new AIModelConfigService(
   AI_MODEL,
   AI_TEMPERATURE ? parseFloat(String(AI_TEMPERATURE)) : undefined,
-  AI_MAX_TOKENS ? parseInt(String(AI_MAX_TOKENS), 10) : undefined,
+  AI_MAX_TOKENS ? parseInt(String(AI_MAX_TOKENS), 10) : undefined
 );
 
 export const openRouterService = new OpenRouterService({

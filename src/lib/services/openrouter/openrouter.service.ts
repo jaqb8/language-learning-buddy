@@ -15,7 +15,7 @@ import type {
   OpenRouterRequestBody,
   OpenRouterResponse,
 } from "./openrouter.types";
-import type { AIModelConfigService } from "../config/ai-model-config.service";
+import type { AIModelConfigService } from "../ai-config/ai-model-config.service";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOKENS_LIMIT = 4096;
@@ -26,12 +26,7 @@ export class OpenRouterService {
   private readonly appName: string;
   private readonly aiModelConfig: AIModelConfigService;
 
-  constructor(config: {
-    apiKey: string;
-    siteUrl: string;
-    appName: string;
-    aiModelConfig: AIModelConfigService;
-  }) {
+  constructor(config: { apiKey: string; siteUrl: string; appName: string; aiModelConfig: AIModelConfigService }) {
     if (!config.apiKey) {
       console.error("No OpenRouter API key provided.");
       throw new OpenRouterConfigurationError();
