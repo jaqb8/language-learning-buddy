@@ -17,11 +17,13 @@ function parseTemperature(value: string | undefined): number | undefined {
   return parsed;
 }
 
+const MAX_TOKENS_LIMIT = 4096;
+
 function parseMaxTokens(value: string | undefined): number | undefined {
   if (!value) return undefined;
   const parsed = parseInt(value, 10);
   if (Number.isNaN(parsed) || parsed <= 0) return undefined;
-  return parsed;
+  return Math.min(parsed, MAX_TOKENS_LIMIT);
 }
 
 export const aiModelConfigService = new AIModelConfigService(

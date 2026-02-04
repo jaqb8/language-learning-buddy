@@ -20,7 +20,7 @@ export class AIModelConfigService {
    * @param maxTokens - Maximum number of tokens (default: 1000)
    */
   constructor(modelName?: string, temperature?: number, maxTokens?: number) {
-    this.modelName = modelName ?? "x-ai/grok-4.1-fast";
+    this.modelName = modelName?.trim() || "x-ai/grok-4.1-fast";
     this.temperature = temperature ?? 0.3;
     this.maxTokens = maxTokens ?? 1000;
   }
