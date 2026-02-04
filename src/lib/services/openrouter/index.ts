@@ -10,10 +10,24 @@ import {
   AI_MAX_TOKENS,
 } from "astro:env/server";
 
+function parseTemperature(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const parsed = parseFloat(value);
+  if (Number.isNaN(parsed) || parsed < 0 || parsed > 2) return undefined;
+  return parsed;
+}
+
+function parseMaxTokens(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const parsed = parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed <= 0) return undefined;
+  return parsed;
+}
+
 export const aiModelConfigService = new AIModelConfigService(
   AI_MODEL,
-  AI_TEMPERATURE ? parseFloat(String(AI_TEMPERATURE)) : undefined,
-  AI_MAX_TOKENS ? parseInt(String(AI_MAX_TOKENS), 10) : undefined
+  parseTemperature(AI_TEMPERATURE),
+  parseMaxTokens(AI_MAX_TOKENS)
 );
 
 export const openRouterService = new OpenRouterService({
