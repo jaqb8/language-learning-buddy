@@ -6,7 +6,7 @@ alwaysApply: false
 
 ### Purpose
 
-This rule helps the agent automatically fetch comments from the latest open Pull Request, analyze them, and apply the required code changes using **GitHub MCP tools**.
+This rule helps the agent automatically fetch comments from the latest open Pull Request, analyze them, and apply the required code changes using **GitHub CLI (gh)**.
 
 ### Procedure
 
@@ -18,43 +18,41 @@ First, get the current branch name:
 git branch --show-current
 ```
 
-Then find the open Pull Request for this branch using MCP:
+Then find the open Pull Request for this branch using GitHub CLI:
 
+```bash
+gh pr list --state open --head "<branch_name>" --json number,title --jq '.[0].number'
 ```
-mcp_github_list_pull_requests(owner: "jaqb8", repo: "language-learning-buddy", state: "open", head: "jaqb8:<branch_name>")
-```
 
-The `head` parameter filters PRs by the source branch in format `owner:branch`.
-
-Save the PR number (`number`) for further use.
+This returns the PR number for the current branch. Save it for further use.
 
 #### 2. Fetch comments from PR
 
-Fetch all comments from the PR using the following MCP tools:
+Fetch all comments from the PR using GitHub CLI:
 
 **Review comments (inline comments on code lines):**
 
-```
-mcp_github_pull_request_read(method: "get_review_comments", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: <PR_NUMBER>)
+```bash
+gh pr review <PR_NUMBER> --json comments --jq '.[] | .comments[]'
 ```
 
 **General reviews:**
 
-```
-mcp_github_pull_request_read(method: "get_reviews", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: <PR_NUMBER>)
+```bash
+gh pr view <PR_NUMBER> --json reviews --jq '.reviews[]'
 ```
 
 **Discussion comments:**
 
-```
-mcp_github_pull_request_read(method: "get_comments", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: <PR_NUMBER>)
+```bash
+gh pr view <PR_NUMBER> --json comments --jq '.comments[]'
 ```
 
 **PR details and changed files:**
 
-```
-mcp_github_pull_request_read(method: "get", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: <PR_NUMBER>)
-mcp_github_pull_request_read(method: "get_files", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: <PR_NUMBER>)
+```bash
+gh pr view <PR_NUMBER> --json title,body,files
+gh pr diff <PR_NUMBER>
 ```
 
 #### 3. Analyze comments
@@ -94,41 +92,44 @@ After applying changes:
 
 ### Example workflow
 
-```
+```bash
 # 1. Get current branch name
 git branch --show-current
 # Returns e.g., "feature/my-feature"
 
 # 2. Find the open PR for this branch
-mcp_github_list_pull_requests(owner: "jaqb8", repo: "language-learning-buddy", state: "open", head: "jaqb8:feature/my-feature")
-# Returns PR with number, e.g., 58
+gh pr list --state open --head "feature/my-feature" --json number --jq '.[0].number'
+# Returns PR number, e.g., 58
 
 # 3. Fetch review comments (inline)
-mcp_github_pull_request_read(method: "get_review_comments", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: 58)
+gh pr review 58 --json comments --jq '.[] | .comments[]'
 
 # 4. Fetch general reviews
-mcp_github_pull_request_read(method: "get_reviews", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: 58)
+gh pr view 58 --json reviews --jq '.reviews[]'
 
 # 5. Fetch discussion comments
-mcp_github_pull_request_read(method: "get_comments", owner: "jaqb8", repo: "language-learning-buddy", pullNumber: 58)
+gh pr view 58 --json comments --jq '.comments[]'
 
 # 6. Analyze comments (agent performs this automatically)
 # 7. Apply code changes (agent performs this automatically)
 # 8. Verify changes (agent performs this automatically)
 ```
 
-### MCP Tools Reference
+### GitHub CLI Commands Reference
 
-| Tool | Method | Description |
-|------|--------|-------------|
-| `mcp_github_list_pull_requests` | - | List PRs with filters (state, sort, direction) |
-| `mcp_github_pull_request_read` | `get` | Get PR details |
-| `mcp_github_pull_request_read` | `get_diff` | Get PR diff |
-| `mcp_github_pull_request_read` | `get_files` | Get list of changed files |
-| `mcp_github_pull_request_read` | `get_review_comments` | Get inline review comments on code |
-| `mcp_github_pull_request_read` | `get_reviews` | Get PR reviews |
-| `mcp_github_pull_request_read` | `get_comments` | Get discussion comments |
-| `mcp_github_pull_request_read` | `get_status` | Get CI/CD status |
+| Command | Description |
+|---------|-------------|
+| `gh pr list` | List PRs with filters (state, head, etc.) |
+| `gh pr view <number>` | Get PR details with customizable output fields |
+| `gh pr diff <number>` | Get PR diff |
+| `gh pr review <number>` | Get PR review comments |
+| `gh pr status` | Get status of PRs related to current branch |
+
+**Common flags:**
+- `--json <fields>` - Output specific fields in JSON format
+- `--jq <expression>` - Filter/transform JSON output using jq syntax
+- `--state` - Filter by state (open, closed, merged)
+- `--head` - Filter by source branch
 
 ### Best practices
 
