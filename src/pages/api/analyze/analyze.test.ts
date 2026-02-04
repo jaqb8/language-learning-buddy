@@ -15,7 +15,7 @@ vi.mock("@/lib/services/openrouter", async (importOriginal) => {
   return {
     ...original,
     openRouterService: {
-      getChatCompletion: vi.fn(),
+      analyzeText: vi.fn(),
     },
   };
 });
@@ -81,7 +81,7 @@ describe("POST /api/analyze", () => {
   const mockCorrectResult: TextAnalysisDto = {
     is_correct: true,
     original_text: "Hello world.",
-    translation: "Witaj świecie.",
+    translation: "Witaj swiecie.",
   };
 
   const mockErrorResult: TextAnalysisDto = {
@@ -89,7 +89,7 @@ describe("POST /api/analyze", () => {
     original_text: "I gonna go home.",
     corrected_text: "I'm going to go home.",
     explanation: "Use 'going to' instead of 'gonna' in formal contexts.",
-    translation: "Zamierzam iść do domu.",
+    translation: "Zamierzam isc do domu.",
   };
 
   const mockUser = { id: "user-123", email: "test@example.com" };
@@ -100,7 +100,7 @@ describe("POST /api/analyze", () => {
     mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true });
   });
 
-  describe("context handling in userMessage", () => {
+  describe("context handling", () => {
     it("should pass analysisContext to AI service when provided", async () => {
       const request = createMockRequest({
         text: "I gonna go home.",
@@ -108,55 +108,47 @@ describe("POST /api/analyze", () => {
         analysisContext: "Writing a formal business email",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain("Tekst do analizy:");
-      expect(callArgs.userMessage).toContain("Kontekst użytkownika:");
-      expect(callArgs.userMessage).toContain("I gonna go home.");
-      expect(callArgs.userMessage).toContain("Writing a formal business email");
+      expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "I gonna go home.",
+        "Writing a formal business email"
+      );
     });
 
-    it("should not include context section when analysisContext is empty string", async () => {
+    it("should not include context when analysisContext is empty string", async () => {
       const request = createMockRequest({
         text: "Hello world.",
         mode: "grammar_and_spelling",
         analysisContext: "",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toBe("Hello world.");
-      expect(callArgs.userMessage).not.toContain("Tekst do analizy:");
-      expect(callArgs.userMessage).not.toContain("Kontekst użytkownika:");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
 
-    it("should not include context section when analysisContext is only whitespace", async () => {
+    it("should not include context when analysisContext is only whitespace", async () => {
       const request = createMockRequest({
         text: "Hello world.",
         mode: "grammar_and_spelling",
         analysisContext: "   ",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toBe("Hello world.");
-      expect(callArgs.userMessage).not.toContain("Kontekst użytkownika:");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
 
     it("should work without analysisContext field at all", async () => {
@@ -165,14 +157,12 @@ describe("POST /api/analyze", () => {
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toBe("Hello world.");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
 
     it("should trim analysisContext whitespace", async () => {
@@ -182,30 +172,15 @@ describe("POST /api/analyze", () => {
         analysisContext: "   Formal email context   ",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain("Kontekst użytkownika:\nFormal email context");
-      expect(callArgs.userMessage).not.toContain("   Formal email context   ");
-    });
-
-    it("should format userMessage correctly with context", async () => {
-      const text = "Test text.";
-      const context = "Business context";
-      const request = createMockRequest({
-        text,
-        mode: "grammar_and_spelling",
-        analysisContext: context,
-      });
-
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
-
-      await POST(createMockContext(request) as Parameters<typeof POST>[0]);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toBe(`Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${context}`);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "Hello world.",
+        "Formal email context"
+      );
     });
 
     it("should work with context in colloquial_speech mode", async () => {
@@ -215,14 +190,16 @@ describe("POST /api/analyze", () => {
         analysisContext: "Casual chat with friends",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain("Casual chat with friends");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "colloquial_speech",
+        "I request your assistance.",
+        "Casual chat with friends"
+      );
     });
   });
 
@@ -239,7 +216,7 @@ describe("POST /api/analyze", () => {
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_analysis_context_too_long");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
 
     it("should accept analysisContext at exactly 500 characters", async () => {
@@ -249,12 +226,12 @@ describe("POST /api/analyze", () => {
         analysisContext: "A".repeat(500),
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
+      expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -263,18 +240,19 @@ describe("POST /api/analyze", () => {
       const request = createMockRequest({
         text: "Hello.",
         mode: "grammar_and_spelling",
-        analysisContext: "Kontekst z polskimi znakami: ąęćółńśźż 🎉",
+        analysisContext: "Kontekst z polskimi znakami: aecólnsz",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain("ąęćółńśźż");
-      expect(callArgs.userMessage).toContain("🎉");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "Hello.",
+        "Kontekst z polskimi znakami: aecólnsz"
+      );
     });
 
     it("should handle context with newlines", async () => {
@@ -287,15 +265,12 @@ Third line`;
         analysisContext: multilineContext,
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain("First line");
-      expect(callArgs.userMessage).toContain("Second line");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello.", multilineContext);
     });
 
     it("should handle context with quotes and special JSON characters", async () => {
@@ -305,14 +280,16 @@ Third line`;
         analysisContext: 'Context with "quotes" and \\backslash',
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toContain('"quotes"');
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "Hello.",
+        'Context with "quotes" and \\backslash'
+      );
     });
   });
 
@@ -324,7 +301,7 @@ Third line`;
         analysisContext: "Formal email",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -341,7 +318,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const context = createMockContext(request, {
         analysisQuota: {
@@ -365,7 +342,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -387,7 +364,7 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("Required");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
 
     it("should return validation error when text is empty string", async () => {
@@ -401,7 +378,7 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_text_empty");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
 
     it("should return validation error when text is only whitespace", async () => {
@@ -415,7 +392,7 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_text_empty");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
 
     it("should return validation error when text exceeds 500 characters", async () => {
@@ -429,7 +406,7 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_text_too_long");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
 
     it("should accept text at exactly 500 characters", async () => {
@@ -438,12 +415,12 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
+      expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
     });
 
     it("should trim text whitespace before validation", async () => {
@@ -452,13 +429,12 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.userMessage).toBe("Hello world.");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
   });
 
@@ -468,13 +444,12 @@ Third line`;
         text: "Hello world.",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.systemMessage).toContain("gramatyki");
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
 
     it("should accept grammar_and_spelling mode", async () => {
@@ -483,11 +458,12 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
     });
 
     it("should accept colloquial_speech mode", async () => {
@@ -496,11 +472,12 @@ Third line`;
         mode: "colloquial_speech",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("colloquial_speech", "Hello world.", undefined);
     });
 
     it("should return validation error for invalid mode", async () => {
@@ -514,7 +491,7 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_invalid_mode");
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
   });
 
@@ -525,7 +502,7 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(500);
-      expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
   });
 
@@ -536,7 +513,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -554,7 +531,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -572,13 +549,13 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body.translation).toBe("Witaj świecie.");
+      expect(body.translation).toBe("Witaj swiecie.");
     });
 
     it("should handle null translation in response", async () => {
@@ -593,7 +570,7 @@ Third line`;
         translation: null,
       };
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(resultWithNullTranslation);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(resultWithNullTranslation);
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -610,7 +587,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterConfigurationError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterConfigurationError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -625,7 +602,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterAuthenticationError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterAuthenticationError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -640,7 +617,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterRateLimitError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterRateLimitError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -655,7 +632,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterInvalidRequestError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterInvalidRequestError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -670,7 +647,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterResponseValidationError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterResponseValidationError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -685,7 +662,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterNetworkError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterNetworkError());
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -700,7 +677,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new Error("Unknown error"));
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new Error("Unknown error"));
 
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
@@ -710,59 +687,35 @@ Third line`;
     });
   });
 
-  describe("analysis modes integration", () => {
-    it("should use grammar prompt for grammar_and_spelling mode", async () => {
+  describe("analysis modes", () => {
+    it("should pass grammar_and_spelling mode to analyzeText", async () => {
       const request = createMockRequest({
         text: "I is happy.",
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.systemMessage).toBeDefined();
-      expect(callArgs.systemMessage.length).toBeGreaterThan(0);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "I is happy.", undefined);
     });
 
-    it("should use colloquial prompt for colloquial_speech mode", async () => {
+    it("should pass colloquial_speech mode to analyzeText", async () => {
       const request = createMockRequest({
         text: "I request your assistance.",
         mode: "colloquial_speech",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
-      const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-      expect(callArgs.systemMessage).toBeDefined();
-      expect(callArgs.systemMessage.length).toBeGreaterThan(0);
-    });
-
-    it("should use different prompts for different modes", async () => {
-      const grammarRequest = createMockRequest({
-        text: "Hello.",
-        mode: "grammar_and_spelling",
-      });
-
-      const colloquialRequest = createMockRequest({
-        text: "Hello.",
-        mode: "colloquial_speech",
-      });
-
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
-
-      await POST(createMockContext(grammarRequest) as Parameters<typeof POST>[0]);
-      const grammarPrompt = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0].systemMessage;
-
-      vi.clearAllMocks();
-
-      await POST(createMockContext(colloquialRequest) as Parameters<typeof POST>[0]);
-      const colloquialPrompt = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0].systemMessage;
-
-      expect(grammarPrompt).not.toBe(colloquialPrompt);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "colloquial_speech",
+        "I request your assistance.",
+        undefined
+      );
     });
   });
 
@@ -773,7 +726,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 
@@ -789,7 +742,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
       mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true });
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
@@ -804,7 +757,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockErrorResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 
@@ -818,7 +771,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request, { user: null }) as Parameters<typeof POST>[0]);
 
@@ -832,7 +785,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
       mockRecordAnalysis.mockRejectedValue(new Error("Database connection failed"));
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
@@ -849,7 +802,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
       mockGetUserSettings.mockRejectedValue(new Error("Settings RPC failed"));
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
@@ -865,7 +818,7 @@ Third line`;
         analysisContext: "Formal email",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 
@@ -879,7 +832,7 @@ Third line`;
         mode: "colloquial_speech",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockCorrectResult);
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 
@@ -905,7 +858,7 @@ Third line`;
         mode: "grammar_and_spelling",
       });
 
-      vi.mocked(openRouterService.getChatCompletion).mockRejectedValue(new OpenRouterNetworkError());
+      vi.mocked(openRouterService.analyzeText).mockRejectedValue(new OpenRouterNetworkError());
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 

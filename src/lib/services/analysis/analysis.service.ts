@@ -1,6 +1,6 @@
 import type { AnalysisMode, TextAnalysisDto } from "../../../types";
 import { getMockAnalysis } from "./analysis.mocks";
-import { openRouterService, aiModelConfigService } from "../openrouter";
+import { openRouterService } from "../openrouter";
 import {
   OpenRouterConfigurationError,
   OpenRouterAuthenticationError,
@@ -20,30 +20,7 @@ import {
 } from "./analysis.errors";
 import type { SupabaseClient } from "../../../db/supabase.client";
 import { AnalysisCacheService } from "./analysis-cache.service";
-import { z } from "zod";
-import grammarPrompt from "@/lib/prompts/grammar-analysis.prompt.md?raw";
-import colloquialPrompt from "@/lib/prompts/colloquial-speech.prompt.md?raw";
 import { USE_MOCKS } from "astro:env/server";
-
-const TextAnalysisSchema = z.discriminatedUnion("is_correct", [
-  z.object({
-    is_correct: z.literal(true),
-    original_text: z.string(),
-    translation: z.string().nullable().optional(),
-  }),
-  z.object({
-    is_correct: z.literal(false),
-    original_text: z.string(),
-    corrected_text: z.string(),
-    explanation: z.string(),
-    translation: z.string().nullable().optional(),
-  }),
-]);
-
-const ANALYSIS_PROMPTS: Record<AnalysisMode, string> = {
-  grammar_and_spelling: grammarPrompt,
-  colloquial_speech: colloquialPrompt,
-};
 
 export class AnalysisService {
   private useMocks: boolean;
@@ -68,8 +45,7 @@ export class AnalysisService {
   }
 
   private async analyzeWithAI(text: string, mode: AnalysisMode, analysisContext?: string): Promise<TextAnalysisDto> {
-    const systemPrompt = ANALYSIS_PROMPTS[mode];
-    const trimmedContext = analysisContext?.trim();
+    const trimmedContext = analysisContext?.trim() || undefined;
     const shouldUseCache = !trimmedContext && this.cacheService;
 
     if (shouldUseCache) {
@@ -83,35 +59,18 @@ export class AnalysisService {
       }
     }
 
-    let userMessage: string;
-    if (trimmedContext) {
-      userMessage = `Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${trimmedContext}`;
-    } else {
-      userMessage = text;
-    }
-
     try {
-      const result = await openRouterService.getChatCompletion({
-        model: aiModelConfigService.getModelName(),
-        systemMessage: systemPrompt,
-        userMessage,
-        responseSchema: TextAnalysisSchema,
-      });
-
-      const normalizedResult = {
-        ...result,
-        translation: result.translation ?? null,
-      };
+      const result = await openRouterService.analyzeText(mode, text, trimmedContext);
 
       if (shouldUseCache) {
         try {
-          await this.cacheService?.set(text, mode, normalizedResult);
+          await this.cacheService?.set(text, mode, result);
         } catch (error) {
           console.error("Cache save failed:", error);
         }
       }
 
-      return normalizedResult;
+      return result;
     } catch (error) {
       if (error instanceof OpenRouterConfigurationError) {
         console.error("OpenRouter configuration error:", error.message);

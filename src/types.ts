@@ -1,4 +1,5 @@
 import type { Database } from "./db/database.types";
+import type { ZodSchema } from "zod";
 
 // ============================================================================
 // Database Entities
@@ -14,8 +15,14 @@ export type LearningItem = Database["public"]["Tables"]["learning_items"]["Row"]
  * Represents the mode of text analysis.
  * - 'grammar_and_spelling': Analyzes text for grammatical and spelling errors
  * - 'colloquial_speech': Analyzes text for naturalness and colloquial style
+ * - 'beta_grammar_and_spelling': Beta version of grammar analysis with optimized prompts
+ * - 'beta_colloquial_speech': Beta version of colloquial speech analysis with optimized prompts
  */
-export type AnalysisMode = "grammar_and_spelling" | "colloquial_speech";
+export type AnalysisMode =
+  | "grammar_and_spelling"
+  | "colloquial_speech"
+  | "beta_grammar_and_spelling"
+  | "beta_colloquial_speech";
 
 // ============================================================================
 // API DTOs (Data Transfer Objects)
@@ -240,10 +247,35 @@ export interface UserViewModel {
 }
 
 // ============================================================================
+// AI Configuration Types
+// ============================================================================
+
+/**
+ * Configuration for the AI model.
+ * Contains model name and inference parameters.
+ */
+export interface AIModelConfig {
+  modelName: string;
+  temperature: number;
+  maxTokens: number;
+}
+
+/**
+ * Configuration for a specific analysis mode.
+ * Contains the system prompt and Zod schema for validating responses.
+ */
+export interface AnalysisModeConfig {
+  prompt: string;
+  schema: ZodSchema<TextAnalysisDto>;
+}
+
+// ============================================================================
 // Analysis Mode Constants
 // ============================================================================
 
 export const ANALYSIS_MODES = {
   GRAMMAR_AND_SPELLING: "grammar_and_spelling",
   COLLOQUIAL_SPEECH: "colloquial_speech",
+  BETA_GRAMMAR_AND_SPELLING: "beta_grammar_and_spelling",
+  BETA_COLLOQUIAL_SPEECH: "beta_colloquial_speech",
 } as const;

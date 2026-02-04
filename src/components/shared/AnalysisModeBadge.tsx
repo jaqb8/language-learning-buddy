@@ -6,11 +6,15 @@ import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
 const ANALYSIS_MODE_LABELS: Record<AnalysisMode, string> = {
   [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: "Gramatyka i ortografia",
   [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "Mowa potoczna",
+  [ANALYSIS_MODES.BETA_GRAMMAR_AND_SPELLING]: "Gramatyka (Beta)",
+  [ANALYSIS_MODES.BETA_COLLOQUIAL_SPEECH]: "Mowa potoczna (Beta)",
 };
 
 const ANALYSIS_MODE_VARIANTS: Record<AnalysisMode, "default" | "secondary"> = {
   [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: "default",
   [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "default",
+  [ANALYSIS_MODES.BETA_GRAMMAR_AND_SPELLING]: "secondary",
+  [ANALYSIS_MODES.BETA_COLLOQUIAL_SPEECH]: "secondary",
 };
 
 interface AnalysisModeBadgeProps {
