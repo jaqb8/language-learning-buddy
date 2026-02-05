@@ -38,7 +38,7 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
         </SelectTrigger>
         <SelectContent>
           {ANALYSIS_MODE_DEFINITIONS.map((modeDefinition) => (
-            <SelectItem key={modeDefinition.value} value={modeDefinition.value} className="text-base">
+            <SelectItem key={modeDefinition.value} value={modeDefinition.value} className="text-base" data-test-id={modeDefinition.testId}>
               {modeDefinition.isBeta ? (
                 <span className="flex items-center gap-2">
                   {modeDefinition.label}

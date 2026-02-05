@@ -289,4 +289,5 @@ export interface AnalysisModeDto {
   label: string;
   description: string;
   isBeta: boolean;
+  testId: string;
 }
