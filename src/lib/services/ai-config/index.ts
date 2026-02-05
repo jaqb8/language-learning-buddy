@@ -1,1 +1,2 @@
-export { AIModelConfigService, type AIModelConfig } from "./ai-model-config.service";
+export { AIConfigService } from "./ai-config.service";
+export type { AIModelConfig, AnalysisModeConfig } from "../../../types";

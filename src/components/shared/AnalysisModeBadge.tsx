@@ -1,17 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { AnalysisMode } from "@/types";
 import { ANALYSIS_MODES } from "@/types";
-import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
-
-const ANALYSIS_MODE_LABELS: Record<AnalysisMode, string> = {
-  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: "Gramatyka i ortografia",
-  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "Mowa potoczna",
-};
-
-const ANALYSIS_MODE_VARIANTS: Record<AnalysisMode, "default" | "secondary"> = {
-  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: "default",
-  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "default",
-};
+import { ANALYSIS_MODE_DEFINITIONS, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
 
 interface AnalysisModeBadgeProps {
   mode: AnalysisMode | string;
@@ -20,8 +10,10 @@ interface AnalysisModeBadgeProps {
 
 export function AnalysisModeBadge({ mode, className }: AnalysisModeBadgeProps) {
   const validMode = isValidAnalysisMode(mode) ? mode : ANALYSIS_MODES.GRAMMAR_AND_SPELLING;
-  const label = ANALYSIS_MODE_LABELS[validMode];
-  const variant = ANALYSIS_MODE_VARIANTS[validMode];
+  const modeDefinition = ANALYSIS_MODE_DEFINITIONS.find((m) => m.value === validMode);
+
+  const label = modeDefinition?.isBeta ? `${modeDefinition.label} (Beta)` : (modeDefinition?.label ?? validMode);
+  const variant = modeDefinition?.isBeta ? "secondary" : "default";
 
   return (
     <Badge variant={variant} className={className} data-test-id="analysis-mode-badge">

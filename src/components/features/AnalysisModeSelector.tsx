@@ -1,18 +1,8 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ANALYSIS_MODES, type AnalysisMode } from "@/types";
+import { Badge } from "@/components/ui/badge";
 import { useAnalysisModeStore } from "@/lib/stores/analysis-mode.store";
+import { ANALYSIS_MODE_DEFINITIONS, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
 import { Info } from "lucide-react";
-
-const ANALYSIS_MODE_LABELS: Record<AnalysisMode, string> = {
-  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: "Gramatyka i ortografia",
-  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "Mowa potoczna",
-};
-
-const ANALYSIS_MODE_DESCRIPTIONS: Record<AnalysisMode, string> = {
-  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]:
-    "Twój tekst zostanie sprawdzony pod kątem błędów gramatycznych i ortograficznych.",
-  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: "Twój tekst zostanie sprawdzony pod kątem naturalności i stylu potocznego.",
-};
 
 interface AnalysisModeSelectorProps {
   disabled?: boolean;
@@ -22,12 +12,14 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
   const mode = useAnalysisModeStore((state) => state.mode);
   const setMode = useAnalysisModeStore((state) => state.setMode);
 
+  const currentMode = ANALYSIS_MODE_DEFINITIONS.find((m) => m.value === mode);
+
   const handleValueChange = (value: string) => {
     if (disabled) {
       return;
     }
-    if (value === ANALYSIS_MODES.GRAMMAR_AND_SPELLING || value === ANALYSIS_MODES.COLLOQUIAL_SPEECH) {
-      setMode(value as AnalysisMode);
+    if (isValidAnalysisMode(value)) {
+      setMode(value);
     }
   };
 
@@ -38,21 +30,32 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
       </label>
       <div className="flex items-center gap-1">
         <Info size={14} />
-        <p className="text-xs text-muted-foreground animate-in fade-in duration-300">
-          {ANALYSIS_MODE_DESCRIPTIONS[mode]}
-        </p>
+        <p className="text-xs text-muted-foreground animate-in fade-in duration-300">{currentMode?.description}</p>
       </div>
       <Select value={mode} onValueChange={handleValueChange} disabled={disabled}>
         <SelectTrigger size="md" id="analysis-mode" className="w-full text-base" data-test-id="analysis-mode-selector">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ANALYSIS_MODES.GRAMMAR_AND_SPELLING} data-test-id="mode-grammar" className="text-base">
-            {ANALYSIS_MODE_LABELS[ANALYSIS_MODES.GRAMMAR_AND_SPELLING]}
-          </SelectItem>
-          <SelectItem value={ANALYSIS_MODES.COLLOQUIAL_SPEECH} data-test-id="mode-colloquial" className="text-base">
-            {ANALYSIS_MODE_LABELS[ANALYSIS_MODES.COLLOQUIAL_SPEECH]}
-          </SelectItem>
+          {ANALYSIS_MODE_DEFINITIONS.map((modeDefinition) => (
+            <SelectItem
+              key={modeDefinition.value}
+              value={modeDefinition.value}
+              className="text-base"
+              data-test-id={modeDefinition.testId}
+            >
+              {modeDefinition.isBeta ? (
+                <span className="flex items-center gap-2">
+                  {modeDefinition.label}
+                  <Badge variant="secondary" className="text-xs">
+                    beta
+                  </Badge>
+                </span>
+              ) : (
+                modeDefinition.label
+              )}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

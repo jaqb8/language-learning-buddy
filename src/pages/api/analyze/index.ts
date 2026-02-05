@@ -13,6 +13,8 @@ import {
 import { GamificationService } from "@/lib/services/gamification";
 import { SettingsService } from "@/lib/services/settings";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
+import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import type { AnalysisMode } from "@/types";
 
 export const prerender = false;
 
@@ -22,10 +24,11 @@ const analyzeTextSchema = z.object({
     .transform((val) => val.trim())
     .pipe(z.string().min(1, "validation_error_text_empty").max(500, "validation_error_text_too_long")),
   mode: z
-    .enum(["grammar_and_spelling", "colloquial_speech"], {
+    .string()
+    .default("grammar_and_spelling")
+    .refine((val): val is AnalysisMode => isValidAnalysisMode(val), {
       message: "validation_error_invalid_mode",
-    })
-    .default("grammar_and_spelling"),
+    }),
   analysisContext: z
     .string()
     .max(500, "validation_error_analysis_context_too_long")
