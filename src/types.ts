@@ -270,7 +270,7 @@ export interface AnalysisModeConfig {
 }
 
 // ============================================================================
-// Analysis Mode Constants
+// Analysis Mode Types & Constants
 // ============================================================================
 
 export const ANALYSIS_MODES = {
@@ -279,3 +279,14 @@ export const ANALYSIS_MODES = {
   BETA_GRAMMAR_AND_SPELLING: "beta_grammar_and_spelling",
   BETA_COLLOQUIAL_SPEECH: "beta_colloquial_speech",
 } as const;
+
+/**
+ * DTO describing an available analysis mode.
+ * Returned by GET /api/analyze/modes.
+ */
+export interface AnalysisModeDto {
+  value: AnalysisMode;
+  label: string;
+  description: string;
+  isBeta: boolean;
+}

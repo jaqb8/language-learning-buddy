@@ -1,5 +1,7 @@
 import { z, type ZodSchema } from "zod";
 import type { AnalysisMode, TextAnalysisDto, AIModelConfig, AnalysisModeConfig } from "../../../types";
+import { ANALYSIS_MODES } from "../../../types";
+import { ANALYSIS_MODE_DEFINITIONS } from "@/lib/analysis-mode.constants";
 import grammarPrompt from "@/lib/prompts/grammar-analysis.prompt.md?raw";
 import colloquialPrompt from "@/lib/prompts/colloquial-speech.prompt.md?raw";
 import betaGrammarPrompt from "@/lib/prompts/beta-grammar-analysis.prompt.md?raw";
@@ -20,24 +22,19 @@ const TextAnalysisSchema = z.discriminatedUnion("is_correct", [
   }),
 ]) as ZodSchema<TextAnalysisDto>;
 
-const ANALYSIS_MODE_CONFIGS: Record<AnalysisMode, AnalysisModeConfig> = {
-  grammar_and_spelling: {
-    prompt: grammarPrompt,
-    schema: TextAnalysisSchema,
-  },
-  colloquial_speech: {
-    prompt: colloquialPrompt,
-    schema: TextAnalysisSchema,
-  },
-  beta_grammar_and_spelling: {
-    prompt: betaGrammarPrompt,
-    schema: TextAnalysisSchema,
-  },
-  beta_colloquial_speech: {
-    prompt: betaColloquialPrompt,
-    schema: TextAnalysisSchema,
-  },
+const PROMPTS: Record<AnalysisMode, string> = {
+  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: grammarPrompt,
+  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: colloquialPrompt,
+  [ANALYSIS_MODES.BETA_GRAMMAR_AND_SPELLING]: betaGrammarPrompt,
+  [ANALYSIS_MODES.BETA_COLLOQUIAL_SPEECH]: betaColloquialPrompt,
 };
+
+const ANALYSIS_MODE_CONFIGS = Object.fromEntries(
+  ANALYSIS_MODE_DEFINITIONS.map((mode) => [
+    mode.value,
+    { prompt: PROMPTS[mode.value], schema: TextAnalysisSchema },
+  ])
+) as Record<AnalysisMode, AnalysisModeConfig>;
 
 /**
  * Service for managing AI configuration.
