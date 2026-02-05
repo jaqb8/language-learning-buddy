@@ -30,10 +30,7 @@ const PROMPTS: Record<AnalysisMode, string> = {
 };
 
 const ANALYSIS_MODE_CONFIGS = Object.fromEntries(
-  ANALYSIS_MODE_DEFINITIONS.map((mode) => [
-    mode.value,
-    { prompt: PROMPTS[mode.value], schema: TextAnalysisSchema },
-  ])
+  ANALYSIS_MODE_DEFINITIONS.map((mode) => [mode.value, { prompt: PROMPTS[mode.value], schema: TextAnalysisSchema }])
 ) as Record<AnalysisMode, AnalysisModeConfig>;
 
 /**

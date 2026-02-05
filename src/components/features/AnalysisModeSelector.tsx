@@ -30,9 +30,7 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
       </label>
       <div className="flex items-center gap-1">
         <Info size={14} />
-        <p className="text-xs text-muted-foreground animate-in fade-in duration-300">
-          {currentMode?.description}
-        </p>
+        <p className="text-xs text-muted-foreground animate-in fade-in duration-300">{currentMode?.description}</p>
       </div>
       <Select value={mode} onValueChange={handleValueChange} disabled={disabled}>
         <SelectTrigger size="md" id="analysis-mode" className="w-full text-base" data-test-id="analysis-mode-selector">

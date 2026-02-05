@@ -12,9 +12,7 @@ export function AnalysisModeBadge({ mode, className }: AnalysisModeBadgeProps) {
   const validMode = isValidAnalysisMode(mode) ? mode : ANALYSIS_MODES.GRAMMAR_AND_SPELLING;
   const modeDefinition = ANALYSIS_MODE_DEFINITIONS.find((m) => m.value === validMode);
 
-  const label = modeDefinition?.isBeta
-    ? `${modeDefinition.label} (Beta)`
-    : (modeDefinition?.label ?? validMode);
+  const label = modeDefinition?.isBeta ? `${modeDefinition.label} (Beta)` : (modeDefinition?.label ?? validMode);
   const variant = modeDefinition?.isBeta ? "secondary" : "default";
 
   return (
