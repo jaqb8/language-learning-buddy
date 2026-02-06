@@ -27,7 +27,7 @@
       },
     },
     "production": {
-      "name": "language-learning-buddy-production",
+      "name": "10xdevs-project",
       "vars": {
         "SUPABASE_URL": "https://jyllkxpxiimsktbzhtvr.supabase.co",
         "USE_MOCKS": false,
