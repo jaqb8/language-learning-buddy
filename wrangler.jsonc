@@ -14,7 +14,7 @@
   },
   "env": {
     "staging": {
-      "name": "10xdevs-project-staging",
+      "name": "language-learning-buddy-staging",
       "vars": {
         "SUPABASE_URL": "https://ktnthoafylnotwieeowv.supabase.co",
         "USE_MOCKS": false,
@@ -27,7 +27,7 @@
       },
     },
     "production": {
-      "name": "10xdevs-project",
+      "name": "language-learning-buddy-production",
       "vars": {
         "SUPABASE_URL": "https://jyllkxpxiimsktbzhtvr.supabase.co",
         "USE_MOCKS": false,
