@@ -10,6 +10,7 @@ import {
   AnalysisNetworkError,
   AnalysisUnknownError,
 } from "@/lib/services/analysis";
+import { OpenRouterAIProvider, openRouterService } from "@/lib/services/openrouter";
 import { GamificationService } from "@/lib/services/gamification";
 import { SettingsService } from "@/lib/services/settings";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
@@ -47,7 +48,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const { text, mode, analysisContext } = validationResult.data;
 
-    const result = await new AnalysisService(locals.supabase).analyzeText(text, mode, analysisContext);
+    const aiProvider = new OpenRouterAIProvider(openRouterService);
+    const result = await new AnalysisService(aiProvider, locals.supabase).analyzeText(text, mode, analysisContext);
 
     if (locals.user) {
       let pointsEnabled = false;

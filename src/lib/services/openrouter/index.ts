@@ -40,5 +40,6 @@ export const openRouterService = new OpenRouterService({
 });
 
 export { OpenRouterService } from "./openrouter.service";
+export { OpenRouterAIProvider } from "./openrouter-ai-provider";
 export * from "./openrouter.errors";
 export * from "./openrouter.types";

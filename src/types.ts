@@ -292,3 +292,11 @@ export interface AnalysisModeDto {
   isBeta: boolean;
   testId: string;
 }
+
+// ============================================================================
+// AI Provider Interface
+// ============================================================================
+
+export interface AIProvider {
+  analyzeText(mode: AnalysisMode, text: string, context?: string): Promise<TextAnalysisDto>;
+}
