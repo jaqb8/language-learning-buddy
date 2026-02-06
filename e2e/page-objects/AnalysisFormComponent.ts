@@ -1,4 +1,4 @@
-import { type Page, type Locator } from "@playwright/test";
+import { type Page, type Locator, expect } from "@playwright/test";
 
 export class AnalysisFormComponent {
   readonly page: Page;
@@ -22,11 +22,14 @@ export class AnalysisFormComponent {
   }
 
   async fillText(text: string) {
+    await this.textInput.waitFor({ state: "visible" });
     await this.textInput.clear();
-    await this.textInput.pressSequentially(text, { delay: 0 });
+    await this.textInput.fill(text);
   }
 
   async submitAnalysis() {
+    await this.submitButton.waitFor({ state: "visible" });
+    await expect(this.submitButton).toBeEnabled({ timeout: 10000 });
     await this.submitButton.click();
   }
 
