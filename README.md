@@ -1,6 +1,6 @@
 # Language Learning Buddy
 
-![Version](https://img.shields.io/badge/Version-1.9.2-brightgreen)
+![Version](https://img.shields.io/badge/Version-1.9.3-brightgreen)
 [![Website](https://img.shields.io/badge/Website-language--learning--buddy.pl-blue?logo=Cloudflare&logoColor=white)](https://language-learning-buddy.pl/)
 
 A personal assistant web application for English language learners, designed to help identify and consciously correct recurring grammatical errors in writing.
