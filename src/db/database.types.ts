@@ -135,18 +135,21 @@ export interface Database {
       };
       user_settings: {
         Row: {
+          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
           updated_at: string;
           user_id: string;
         };
         Insert: {
+          beta_modes_enabled?: boolean;
           context_enabled?: boolean;
           points_enabled?: boolean;
           updated_at?: string;
           user_id: string;
         };
         Update: {
+          beta_modes_enabled?: boolean;
           context_enabled?: boolean;
           points_enabled?: boolean;
           updated_at?: string;
@@ -173,6 +176,7 @@ export interface Database {
       get_user_settings: {
         Args: never;
         Returns: {
+          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
         }[];
@@ -194,8 +198,9 @@ export interface Database {
         Returns: undefined;
       };
       upsert_user_settings: {
-        Args: { p_context_enabled?: boolean; p_points_enabled?: boolean };
+        Args: { p_beta_modes_enabled?: boolean; p_context_enabled?: boolean; p_points_enabled?: boolean };
         Returns: {
+          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
         }[];

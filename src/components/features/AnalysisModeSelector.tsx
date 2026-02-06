@@ -1,8 +1,11 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { useAnalysisModeStore } from "@/lib/stores/analysis-mode.store";
+import { useSettingsStore } from "@/lib/stores/settings.store";
 import { ANALYSIS_MODE_DEFINITIONS, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import { ANALYSIS_MODES } from "@/types";
 import { Info } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { BetaBadge } from "@/components/shared/BetaBadge";
 
 interface AnalysisModeSelectorProps {
   disabled?: boolean;
@@ -11,8 +14,30 @@ interface AnalysisModeSelectorProps {
 export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorProps) {
   const mode = useAnalysisModeStore((state) => state.mode);
   const setMode = useAnalysisModeStore((state) => state.setMode);
+  const betaModesEnabled = useSettingsStore((state) => state.betaModesEnabled);
+  const isLoaded = useSettingsStore((state) => state.isLoaded);
 
-  const currentMode = ANALYSIS_MODE_DEFINITIONS.find((m) => m.value === mode);
+  const isBetaVisible = isLoaded ? betaModesEnabled : false;
+
+  const visibleModes = useMemo(
+    () => (isBetaVisible ? ANALYSIS_MODE_DEFINITIONS : ANALYSIS_MODE_DEFINITIONS.filter((m) => !m.isBeta)),
+    [isBetaVisible]
+  );
+
+  const currentMode = visibleModes.find((m) => m.value === mode);
+
+  useEffect(() => {
+    if (isBetaVisible) {
+      return;
+    }
+
+    const isBetaMode = ANALYSIS_MODE_DEFINITIONS.some((m) => m.value === mode && m.isBeta);
+    if (!isBetaMode) {
+      return;
+    }
+
+    setMode(ANALYSIS_MODES.GRAMMAR_AND_SPELLING);
+  }, [isBetaVisible, mode, setMode]);
 
   const handleValueChange = (value: string) => {
     if (disabled) {
@@ -37,7 +62,7 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {ANALYSIS_MODE_DEFINITIONS.map((modeDefinition) => (
+          {visibleModes.map((modeDefinition) => (
             <SelectItem
               key={modeDefinition.value}
               value={modeDefinition.value}
@@ -47,9 +72,7 @@ export function AnalysisModeSelector({ disabled = false }: AnalysisModeSelectorP
               {modeDefinition.isBeta ? (
                 <span className="flex items-center gap-2">
                   {modeDefinition.label}
-                  <Badge variant="secondary" className="text-xs">
-                    beta
-                  </Badge>
+                  <BetaBadge />
                 </span>
               ) : (
                 modeDefinition.label

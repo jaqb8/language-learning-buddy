@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BetaBadge } from "@/components/shared/BetaBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,15 +19,19 @@ export function SettingsView() {
   const {
     isLoaded,
     gamificationBetaTagEnabled,
+    betaModesBetaTagEnabled,
     currentPointsEnabled,
     currentContextEnabled,
+    currentBetaModesEnabled,
     isSavingPoints,
     isSavingContext,
+    isSavingBetaModes,
     isConfirmOpen,
     setConfirmOpen,
     onPointsCheckedChange,
     confirmDisablePoints,
     toggleContext,
+    toggleBetaModes,
   } = useSettingsViewController();
 
   return (
@@ -61,6 +66,16 @@ export function SettingsView() {
                 <Skeleton className="h-5 w-10 rounded-full" />
               </CardContent>
             </Card>
+            <Card>
+              <CardHeader className="space-y-2">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-80" />
+              </CardHeader>
+              <CardContent className="flex items-center justify-between gap-4">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-5 w-10 rounded-full" />
+              </CardContent>
+            </Card>
           </>
         ) : (
           <>
@@ -68,11 +83,7 @@ export function SettingsView() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span>Procent poprawnych analiz</span>
-                  {gamificationBetaTagEnabled && (
-                    <span className="text-[9px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 border border-amber-400 dark:border-amber-500 rounded-sm px-1 py-0.5">
-                      beta
-                    </span>
-                  )}
+                  {gamificationBetaTagEnabled && <BetaBadge />}
                 </CardTitle>
                 <CardDescription>Wyświetla procent analiz bez błędów i pomaga śledzić postępy w nauce.</CardDescription>
               </CardHeader>
@@ -111,6 +122,33 @@ export function SettingsView() {
                   onCheckedChange={toggleContext}
                   aria-label="Kontekst analizy"
                   data-test-id="settings-context-switch"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>Tryby analizy beta</span>
+                  {betaModesBetaTagEnabled && <BetaBadge />}
+                </CardTitle>
+                <CardDescription>
+                  Eksperymentalne tryby analizy z ulepszonymi promptami. Po wyłączeniu znikają z interfejsu.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {currentBetaModesEnabled
+                    ? "Tryby beta są widoczne w selektorze."
+                    : "Tryby beta są ukryte w interfejsie."}
+                </div>
+                <Switch
+                  checked={currentBetaModesEnabled}
+                  className="cursor-pointer"
+                  disabled={!isLoaded || isSavingBetaModes}
+                  onCheckedChange={toggleBetaModes}
+                  aria-label="Tryby analizy beta"
+                  data-test-id="settings-beta-modes-switch"
                 />
               </CardContent>
             </Card>
