@@ -8,7 +8,11 @@ interface SettingsState {
 }
 
 interface SettingsActions {
-  initializeSettings: (settings: { pointsEnabled: boolean; contextEnabled: boolean; betaModesEnabled: boolean }) => void;
+  initializeSettings: (settings: {
+    pointsEnabled: boolean;
+    contextEnabled: boolean;
+    betaModesEnabled: boolean;
+  }) => void;
   setPointsEnabled: (enabled: boolean) => void;
   setContextEnabled: (enabled: boolean) => void;
   setBetaModesEnabled: (enabled: boolean) => void;

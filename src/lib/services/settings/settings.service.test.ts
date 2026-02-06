@@ -69,7 +69,10 @@ describe("SettingsService", () => {
       const mockSupabase = {
         rpc: vi
           .fn()
-          .mockResolvedValue({ data: [{ points_enabled: true, context_enabled: false, beta_modes_enabled: true }], error: null }),
+          .mockResolvedValue({
+            data: [{ points_enabled: true, context_enabled: false, beta_modes_enabled: true }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 
@@ -87,7 +90,10 @@ describe("SettingsService", () => {
       const mockSupabase = {
         rpc: vi
           .fn()
-          .mockResolvedValue({ data: [{ points_enabled: false, context_enabled: true, beta_modes_enabled: false }], error: null }),
+          .mockResolvedValue({
+            data: [{ points_enabled: false, context_enabled: true, beta_modes_enabled: false }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 
@@ -100,7 +106,10 @@ describe("SettingsService", () => {
       const mockSupabase = {
         rpc: vi
           .fn()
-          .mockResolvedValue({ data: [{ points_enabled: null, context_enabled: null, beta_modes_enabled: null }], error: null }),
+          .mockResolvedValue({
+            data: [{ points_enabled: null, context_enabled: null, beta_modes_enabled: null }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 

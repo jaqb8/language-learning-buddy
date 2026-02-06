@@ -15,7 +15,7 @@ const updateSettingsSchema = z
     (data) =>
       data.pointsEnabled !== undefined || data.contextEnabled !== undefined || data.betaModesEnabled !== undefined,
     {
-    message: "validation_error_settings_empty",
+      message: "validation_error_settings_empty",
     }
   );
 

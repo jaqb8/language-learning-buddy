@@ -47,9 +47,7 @@ export function GamificationBadgeButton({ vm, isLoading }: GamificationBadgeButt
       >
         <Icon className={cn("size-4", vm.config.textClass)} />
         <span className={cn("text-base font-medium", vm.config.textClass)}>{vm.percentage}%</span>
-        {vm.showBeta && (
-          <BetaBadge />
-        )}
+        {vm.showBeta && <BetaBadge />}
       </button>
     </SheetTrigger>
   );

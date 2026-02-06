@@ -52,10 +52,7 @@ export function useSettingsViewController() {
 
   const currentPointsEnabled = useMemo(() => (isLoaded ? pointsEnabled : true), [isLoaded, pointsEnabled]);
   const currentContextEnabled = useMemo(() => (isLoaded ? contextEnabled : true), [isLoaded, contextEnabled]);
-  const currentBetaModesEnabled = useMemo(
-    () => (isLoaded ? betaModesEnabled : false),
-    [isLoaded, betaModesEnabled]
-  );
+  const currentBetaModesEnabled = useMemo(() => (isLoaded ? betaModesEnabled : false), [isLoaded, betaModesEnabled]);
 
   const isSavingPoints = state.kind === "savingPointsEnable" || state.kind === "savingPointsDisable";
   const isSavingContext = state.kind === "savingContext";

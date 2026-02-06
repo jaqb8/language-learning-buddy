@@ -83,9 +83,7 @@ export function SettingsView() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span>Procent poprawnych analiz</span>
-                  {gamificationBetaTagEnabled && (
-                    <BetaBadge />
-                  )}
+                  {gamificationBetaTagEnabled && <BetaBadge />}
                 </CardTitle>
                 <CardDescription>Wyświetla procent analiz bez błędów i pomaga śledzić postępy w nauce.</CardDescription>
               </CardHeader>
