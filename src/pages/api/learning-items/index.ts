@@ -3,6 +3,8 @@ import { z } from "zod";
 import { LearningItemsService, LearningItemsDatabaseError } from "@/lib/services/learning-items";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
 import { isFeatureEnabled } from "@/features/feature-flags.service";
+import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import type { AnalysisMode } from "@/types";
 
 export const prerender = false;
 
@@ -34,9 +36,12 @@ const createLearningItemSchema = z.object({
     .string()
     .min(1, { message: "validation_error_explanation_empty" })
     .max(500, { message: "validation_error_explanation_too_long" }),
-  analysis_mode: z.enum(["grammar_and_spelling", "colloquial_speech"], {
-    message: "validation_error_invalid_mode",
-  }),
+  analysis_mode: z
+    .string()
+    .default("grammar_and_spelling")
+    .refine((val): val is AnalysisMode => isValidAnalysisMode(val), {
+      message: "validation_error_invalid_mode",
+    }),
   translation: z.string().nullable(),
 });
 

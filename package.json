@@ -1,7 +1,7 @@
 {
   "name": "10x-astro-starter",
   "type": "module",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "scripts": {
     "dev": "astro dev",
     "dev:e2e": "astro dev --mode test",
@@ -16,7 +16,7 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "supabase:restart": "supabase restart",
-    "supabase:migration:up": "supabase migration up",
+    "supabase:migration:up": "npx supabase migration up --linked",
     "supabase:gen-types": "supabase gen types typescript --local > src/db/database.types.ts",
     "test": "vitest",
     "test:run": "vitest run",

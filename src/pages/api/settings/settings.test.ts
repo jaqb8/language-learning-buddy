@@ -62,8 +62,8 @@ describe("Settings API", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true });
-    mockUpdateSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true });
+    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
+    mockUpdateSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
   });
 
   describe("GET /api/settings", () => {
@@ -79,13 +79,13 @@ describe("Settings API", () => {
 
     it("should return settings for authenticated user", async () => {
       const context = createMockContext(createGetRequest(), { user: mockUser, supabase: {} });
-      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true });
+      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: true });
 
       const response = await GET(context as Parameters<typeof GET>[0]);
 
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body).toEqual({ pointsEnabled: false, contextEnabled: true });
+      expect(body).toEqual({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: true });
     });
 
     it("should return JSON content type", async () => {
@@ -161,13 +161,13 @@ describe("Settings API", () => {
     it("should return 200 and updated settings on success", async () => {
       const request = createMockRequest({ pointsEnabled: false });
       const context = createMockContext(request, { user: mockUser, supabase: {} });
-      mockUpdateSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true });
+      mockUpdateSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: false });
 
       const response = await PATCH(context as Parameters<typeof PATCH>[0]);
 
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body).toEqual({ pointsEnabled: false, contextEnabled: true });
+      expect(body).toEqual({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: false });
       expect(mockUpdateSettings).toHaveBeenCalledWith({ pointsEnabled: false });
     });
 

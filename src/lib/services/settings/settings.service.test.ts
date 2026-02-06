@@ -10,7 +10,10 @@ describe("SettingsService", () => {
   describe("getUserSettings", () => {
     it("should call get_user_settings RPC without parameters", async () => {
       const mockSupabase = {
-        rpc: vi.fn().mockResolvedValue({ data: [{ points_enabled: true, context_enabled: true }], error: null }),
+        rpc: vi.fn().mockResolvedValue({
+          data: [{ points_enabled: true, context_enabled: true, beta_modes_enabled: false }],
+          error: null,
+        }),
       };
       const service = new SettingsService(mockSupabase as never);
 
@@ -22,13 +25,16 @@ describe("SettingsService", () => {
 
     it("should map snake_case settings to camelCase", async () => {
       const mockSupabase = {
-        rpc: vi.fn().mockResolvedValue({ data: [{ points_enabled: false, context_enabled: true }], error: null }),
+        rpc: vi.fn().mockResolvedValue({
+          data: [{ points_enabled: false, context_enabled: true, beta_modes_enabled: true }],
+          error: null,
+        }),
       };
       const service = new SettingsService(mockSupabase as never);
 
       const result = await service.getUserSettings();
 
-      expect(result).toEqual({ pointsEnabled: false, contextEnabled: true });
+      expect(result).toEqual({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: true });
     });
 
     it("should return defaults when no settings row exists", async () => {
@@ -39,7 +45,7 @@ describe("SettingsService", () => {
 
       const result = await service.getUserSettings();
 
-      expect(result).toEqual({ pointsEnabled: true, contextEnabled: true });
+      expect(result).toEqual({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
     });
 
     it("should throw SettingsDatabaseError on database error", async () => {
@@ -61,39 +67,55 @@ describe("SettingsService", () => {
   describe("updateSettings", () => {
     it("should call upsert_user_settings with correct parameters", async () => {
       const mockSupabase = {
-        rpc: vi.fn().mockResolvedValue({ data: [{ points_enabled: true, context_enabled: false }], error: null }),
+        rpc: vi
+          .fn()
+          .mockResolvedValue({
+            data: [{ points_enabled: true, context_enabled: false, beta_modes_enabled: true }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 
-      await service.updateSettings({ pointsEnabled: true, contextEnabled: false });
+      await service.updateSettings({ pointsEnabled: true, contextEnabled: false, betaModesEnabled: true });
 
       expect(mockSupabase.rpc).toHaveBeenCalledTimes(1);
       expect(mockSupabase.rpc).toHaveBeenCalledWith("upsert_user_settings", {
         p_points_enabled: true,
         p_context_enabled: false,
+        p_beta_modes_enabled: true,
       });
     });
 
     it("should return updated settings", async () => {
       const mockSupabase = {
-        rpc: vi.fn().mockResolvedValue({ data: [{ points_enabled: false, context_enabled: true }], error: null }),
+        rpc: vi
+          .fn()
+          .mockResolvedValue({
+            data: [{ points_enabled: false, context_enabled: true, beta_modes_enabled: false }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 
       const result = await service.updateSettings({ pointsEnabled: false });
 
-      expect(result).toEqual({ pointsEnabled: false, contextEnabled: true });
+      expect(result).toEqual({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: false });
     });
 
     it("should default missing fields to true when RPC returns nulls", async () => {
       const mockSupabase = {
-        rpc: vi.fn().mockResolvedValue({ data: [{ points_enabled: null, context_enabled: null }], error: null }),
+        rpc: vi
+          .fn()
+          .mockResolvedValue({
+            data: [{ points_enabled: null, context_enabled: null, beta_modes_enabled: null }],
+            error: null,
+          }),
       };
       const service = new SettingsService(mockSupabase as never);
 
       const result = await service.updateSettings({ pointsEnabled: false });
 
-      expect(result).toEqual({ pointsEnabled: true, contextEnabled: true });
+      expect(result).toEqual({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
     });
 
     it("should throw SettingsDatabaseError on database error", async () => {

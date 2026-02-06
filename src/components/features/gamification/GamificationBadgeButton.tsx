@@ -3,6 +3,7 @@ import { SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { GamificationBadgeVM } from "./gamificationBadge.model";
+import { BetaBadge } from "@/components/shared/BetaBadge";
 
 interface GamificationBadgeButtonProps {
   vm: GamificationBadgeVM | null;
@@ -46,16 +47,7 @@ export function GamificationBadgeButton({ vm, isLoading }: GamificationBadgeButt
       >
         <Icon className={cn("size-4", vm.config.textClass)} />
         <span className={cn("text-base font-medium", vm.config.textClass)}>{vm.percentage}%</span>
-        {vm.showBeta && (
-          <span
-            className={cn(
-              "text-[7px] font-semibold uppercase tracking-wide border rounded-sm px-1 py-0.5",
-              vm.config.betaClass
-            )}
-          >
-            beta
-          </span>
-        )}
+        {vm.showBeta && <BetaBadge />}
       </button>
     </SheetTrigger>
   );

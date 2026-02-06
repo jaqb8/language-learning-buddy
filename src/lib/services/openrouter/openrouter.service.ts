@@ -15,7 +15,8 @@ import type {
   OpenRouterRequestBody,
   OpenRouterResponse,
 } from "./openrouter.types";
-import type { AIModelConfigService } from "../ai-config/ai-model-config.service";
+import type { AIConfigService } from "../ai-config/ai-config.service";
+import type { AnalysisMode, TextAnalysisDto } from "../../../types";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOKENS_LIMIT = 4096;
@@ -24,9 +25,9 @@ export class OpenRouterService {
   private readonly apiKey: string;
   private readonly siteUrl: string;
   private readonly appName: string;
-  private readonly aiModelConfig: AIModelConfigService;
+  private readonly aiConfig: AIConfigService;
 
-  constructor(config: { apiKey: string; siteUrl: string; appName: string; aiModelConfig: AIModelConfigService }) {
+  constructor(config: { apiKey: string; siteUrl: string; appName: string; aiConfig: AIConfigService }) {
     if (!config.apiKey) {
       console.error("No OpenRouter API key provided.");
       throw new OpenRouterConfigurationError();
@@ -34,7 +35,40 @@ export class OpenRouterService {
     this.apiKey = config.apiKey;
     this.siteUrl = config.siteUrl;
     this.appName = config.appName;
-    this.aiModelConfig = config.aiModelConfig;
+    this.aiConfig = config.aiConfig;
+  }
+
+  /**
+   * Analyzes text using the configured AI model with the specified analysis mode.
+   * This is a high-level method that automatically handles prompt and schema configuration.
+   *
+   * @param mode - The analysis mode (grammar_and_spelling or colloquial_speech)
+   * @param text - The text to analyze
+   * @param context - Optional context provided by the user
+   * @returns Analysis result with corrections and explanations if needed
+   */
+  async analyzeText(mode: AnalysisMode, text: string, context?: string): Promise<TextAnalysisDto> {
+    const { prompt, schema } = this.aiConfig.getAnalysisModeConfig(mode);
+
+    const trimmedContext = context?.trim();
+    let userMessage: string;
+    if (trimmedContext) {
+      userMessage = `Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${trimmedContext}`;
+    } else {
+      userMessage = text;
+    }
+
+    const result = await this.getChatCompletion({
+      model: this.aiConfig.getModelName(),
+      systemMessage: prompt,
+      userMessage,
+      responseSchema: schema,
+    });
+
+    return {
+      ...result,
+      translation: result.translation ?? null,
+    };
   }
 
   async getChatCompletion<T>(params: ChatCompletionParams<T>): Promise<T> {
@@ -104,8 +138,8 @@ export class OpenRouterService {
       name: "response",
     });
 
-    const temperature = params.temperature ?? this.aiModelConfig.getTemperature();
-    const maxTokens = params.maxTokens ?? this.aiModelConfig.getMaxTokens();
+    const temperature = params.temperature ?? this.aiConfig.getTemperature();
+    const maxTokens = params.maxTokens ?? this.aiConfig.getMaxTokens();
 
     const requestBody: OpenRouterRequestBody = {
       model: params.model,

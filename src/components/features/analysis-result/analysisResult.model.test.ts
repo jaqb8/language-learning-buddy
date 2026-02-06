@@ -165,4 +165,3 @@ describe("analysisResult.model", () => {
     expect(vm2.saveCta.kind).toBe("hidden");
   });
 });
-

@@ -4,12 +4,7 @@ import type { TextAnalysisDto } from "../../../types";
 
 vi.mock("../openrouter", () => ({
   openRouterService: {
-    getChatCompletion: vi.fn(),
-  },
-  aiModelConfigService: {
-    getModelName: vi.fn().mockReturnValue("x-ai/grok-4.1-fast"),
-    getTemperature: vi.fn().mockReturnValue(0.3),
-    getMaxTokens: vi.fn().mockReturnValue(1000),
+    analyzeText: vi.fn(),
   },
   OpenRouterConfigurationError: class OpenRouterConfigurationError extends Error {},
   OpenRouterAuthenticationError: class OpenRouterAuthenticationError extends Error {},
@@ -25,7 +20,7 @@ vi.mock("astro:env/server", () => ({
 
 import { openRouterService } from "../openrouter";
 
-describe("AnalysisService - userMessage building", () => {
+describe("AnalysisService", () => {
   let service: AnalysisService;
   const mockResponse: TextAnalysisDto = {
     is_correct: true,
@@ -38,113 +33,68 @@ describe("AnalysisService - userMessage building", () => {
     service = new AnalysisService();
   });
 
-  it("should build userMessage without context when analysisContext is not provided", async () => {
+  it("should call openRouterService.analyzeText with correct parameters", async () => {
     const text = "I am a student.";
     const mode = "grammar_and_spelling";
 
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
 
     await service.analyzeText(text, mode);
 
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toBe(text);
-    expect(callArgs.userMessage).not.toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).not.toContain("Kontekst użytkownika:");
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
   });
 
-  it("should build userMessage without context when analysisContext is empty string", async () => {
-    const text = "I am a student.";
-    const mode = "grammar_and_spelling";
-    const analysisContext = "";
-
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
-
-    await service.analyzeText(text, mode, analysisContext);
-
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toBe(text);
-    expect(callArgs.userMessage).not.toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).not.toContain("Kontekst użytkownika:");
-  });
-
-  it("should build userMessage without context when analysisContext is only whitespace", async () => {
-    const text = "I am a student.";
-    const mode = "grammar_and_spelling";
-    const analysisContext = "   ";
-
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
-
-    await service.analyzeText(text, mode, analysisContext);
-
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toBe(text);
-    expect(callArgs.userMessage).not.toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).not.toContain("Kontekst użytkownika:");
-  });
-
-  it("should build userMessage with context when analysisContext is provided", async () => {
+  it("should pass context to openRouterService.analyzeText when provided", async () => {
     const text = "I am a student.";
     const mode = "grammar_and_spelling";
     const analysisContext = "Piszę email do mojego szefa";
 
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
 
     await service.analyzeText(text, mode, analysisContext);
 
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).toContain("Kontekst użytkownika:");
-    expect(callArgs.userMessage).toContain(text);
-    expect(callArgs.userMessage).toContain(analysisContext);
-    expect(callArgs.userMessage).toBe(`Tekst do analizy:\n${text}\n\nKontekst użytkownika:\n${analysisContext}`);
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledWith(mode, text, analysisContext);
   });
 
-  it("should trim analysisContext when building userMessage", async () => {
+  it("should pass undefined context when analysisContext is empty string", async () => {
     const text = "I am a student.";
     const mode = "grammar_and_spelling";
-    const analysisContext = "  Piszę email do mojego szefa  ";
+    const analysisContext = "";
 
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
 
     await service.analyzeText(text, mode, analysisContext);
 
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).toContain("Kontekst użytkownika:");
-    expect(callArgs.userMessage).toContain(text);
-    expect(callArgs.userMessage).toContain("Piszę email do mojego szefa");
-    expect(callArgs.userMessage).not.toContain("  Piszę email do mojego szefa  ");
-    expect(callArgs.userMessage).toBe(
-      `Tekst do analizy:\n${text}\n\nKontekst użytkownika:\nPiszę email do mojego szefa`
-    );
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
   });
 
-  it("should build userMessage with context for colloquial_speech mode", async () => {
+  it("should pass undefined context when analysisContext is only whitespace", async () => {
+    const text = "I am a student.";
+    const mode = "grammar_and_spelling";
+    const analysisContext = "   ";
+
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
+
+    await service.analyzeText(text, mode, analysisContext);
+
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
+  });
+
+  it("should work with colloquial_speech mode", async () => {
     const text = "Hey, what's up?";
     const mode = "colloquial_speech";
     const analysisContext = "Piszę do przyjaciela";
 
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
 
     await service.analyzeText(text, mode, analysisContext);
 
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
-    const callArgs = vi.mocked(openRouterService.getChatCompletion).mock.calls[0][0];
-
-    expect(callArgs.userMessage).toContain("Tekst do analizy:");
-    expect(callArgs.userMessage).toContain("Kontekst użytkownika:");
-    expect(callArgs.userMessage).toContain(text);
-    expect(callArgs.userMessage).toContain(analysisContext);
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledWith(mode, text, analysisContext);
   });
 });
 
@@ -165,12 +115,12 @@ describe("AnalysisService - cache integration", () => {
     };
     const service = new AnalysisService(mockSupabase as never);
 
-    vi.mocked(openRouterService.getChatCompletion).mockResolvedValue(mockResponse);
+    vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockResponse);
 
     await service.analyzeText("I am a student.", "grammar_and_spelling", "Piszę email do mojego szefa");
 
     expect(mockSupabase.rpc).not.toHaveBeenCalled();
-    expect(openRouterService.getChatCompletion).toHaveBeenCalledTimes(1);
+    expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
   });
 
   it("should return cached result when context is missing", async () => {
@@ -189,6 +139,6 @@ describe("AnalysisService - cache integration", () => {
     const result = await service.analyzeText("I are student", "grammar_and_spelling");
 
     expect(result).toEqual(cachedResult);
-    expect(openRouterService.getChatCompletion).not.toHaveBeenCalled();
+    expect(openRouterService.analyzeText).not.toHaveBeenCalled();
   });
 });
