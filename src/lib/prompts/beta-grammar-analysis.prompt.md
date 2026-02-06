@@ -8,7 +8,7 @@ Kontekst (opcjonalny):
 Zasady:
 
 1. Zawsze tłumacz na naturalny polski w `translation`.
-2. Jeśli błąd (`is_correct: false`): popraw tekst w `corrected_text` (CZYSTY TEKST, bez Markdown) i wypełnij `explanation`.
+2. Jeśli błąd (`is_correct: false`): popraw tekst w `corrected_text` (CZYSTY TEKST, bez Markdown) i wypełnij `explanation`. `corrected_text` zawsze musi być w języku angielskim.
 3. **ZAKAZ: Nie powtarzaj treści `corrected_text` ani oryginału w polu `explanation`.** Przejdź od razu do konkretnego wyjaśnienia zasady.
 4. **WAŻNE: Pole `explanation` musi być napisane w całości PO POLSKU.**
 5. Jeśli poprawny: `is_correct: true`.

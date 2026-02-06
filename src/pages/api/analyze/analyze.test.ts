@@ -97,7 +97,7 @@ describe("POST /api/analyze", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRecordAnalysis.mockResolvedValue({ correctAnalyses: 1, totalAnalyses: 1 });
-    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true });
+    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
   });
 
   describe("context handling", () => {
@@ -743,7 +743,7 @@ Third line`;
       });
 
       vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
-      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true });
+      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: false });
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 

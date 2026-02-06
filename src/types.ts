@@ -42,6 +42,7 @@ export interface ApiErrorResponse {
 export interface UserSettings {
   pointsEnabled: boolean;
   contextEnabled: boolean;
+  betaModesEnabled: boolean;
 }
 
 /**

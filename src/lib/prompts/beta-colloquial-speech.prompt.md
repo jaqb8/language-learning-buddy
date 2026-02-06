@@ -10,7 +10,7 @@ Zasady analizy:
 1. `is_correct: false`, jeśli tekst jest "sztywny", nienaturalny lub ma zły szyk.
 2. Priorytet Phrasal Verbs: jeśli można go użyć, popraw tekst i ustaw `is_correct: false`.
 3. **`explanation` WYŁĄCZNIE po polsku. ZAKAZ powtarzania poprawionego zdania.** Skup się tylko na różnicy stylistycznej.
-4. W `corrected_text` podawaj WYŁĄCZNIE czysty tekst (zakaz Markdown).
+4. W `corrected_text` podawaj WYŁĄCZNIE czysty tekst (zakaz Markdown). `corrected_text` zawsze musi być w języku angielskim.
 5. Tłumacz na naturalny polski w `translation`.
 
 Wyjaśnienia (Markdown po POLSKU):
