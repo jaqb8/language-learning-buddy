@@ -80,11 +80,16 @@ export function AnalysisForm({
         e.preventDefault();
         onSubmit();
       }
+
+      if (e.key === "Backspace" && (e.ctrlKey || e.metaKey) && e.shiftKey && !isClearDisabled) {
+        e.preventDefault();
+        handleClearClick();
+      }
     };
 
     form.addEventListener("keydown", handleKeyDown);
     return () => form.removeEventListener("keydown", handleKeyDown);
-  }, [isDisabled, onSubmit]);
+  }, [isDisabled, onSubmit, isClearDisabled, handleClearClick]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -254,6 +259,11 @@ export function AnalysisForm({
           data-test-id="analysis-clear-button"
         >
           Wyczyść
+          <KbdGroup className="ml-2 hidden sm:inline-flex">
+            <Kbd>{modifierKey}</Kbd>
+            <Kbd>Shift</Kbd>
+            <Kbd>⌫</Kbd>
+          </KbdGroup>
         </Button>
       </div>
     </form>
