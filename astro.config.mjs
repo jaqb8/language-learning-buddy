@@ -13,7 +13,7 @@ export default defineConfig({
   devToolbar: {
     enabled: false,
   },
-  server: { port: 3000 },
+  server: { host: "0.0.0.0", port: 3000 },
   env: {
     schema: {
       PUBLIC_ENV_NAME: envField.string({ context: "client", access: "public" }),
@@ -34,6 +34,9 @@ export default defineConfig({
     validateSecrets: true,
   },
   vite: {
+    server: {
+      allowedHosts: ["rpi2.host.local"],
+    },
     plugins: [tailwindcss()],
     resolve: {
       // Use react-dom/server.edge instead of react-dom/server.browser for React 19.

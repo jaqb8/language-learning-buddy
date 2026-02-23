@@ -71,21 +71,6 @@ export function AnalysisForm({
     [onTextChange]
   );
 
-  useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isDisabled) {
-        e.preventDefault();
-        onSubmit();
-      }
-    };
-
-    form.addEventListener("keydown", handleKeyDown);
-    return () => form.removeEventListener("keydown", handleKeyDown);
-  }, [isDisabled, onSubmit]);
-
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -118,6 +103,23 @@ export function AnalysisForm({
     el?.scrollIntoView({ behavior: "smooth", block: "start" });
     el?.focus();
   }, [onClear]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isDisabled) {
+        e.preventDefault();
+        onSubmit();
+      }
+
+      if (e.key === "Delete" && (e.ctrlKey || e.metaKey) && !isClearDisabled) {
+        e.preventDefault();
+        handleClearClick();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isDisabled, onSubmit, isClearDisabled, handleClearClick]);
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" aria-label="Formularz analizy tekstu">
@@ -254,6 +256,10 @@ export function AnalysisForm({
           data-test-id="analysis-clear-button"
         >
           Wyczyść
+          <KbdGroup className="ml-2 hidden sm:inline-flex">
+            <Kbd>{modifierKey}</Kbd>
+            <Kbd>Del</Kbd>
+          </KbdGroup>
         </Button>
       </div>
     </form>
