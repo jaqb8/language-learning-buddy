@@ -105,23 +105,20 @@ export function AnalysisForm({
   }, [onClear]);
 
   useEffect(() => {
-    const form = formRef.current;
-    if (!form) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isDisabled) {
         e.preventDefault();
         onSubmit();
       }
 
-      if (e.key === "Backspace" && (e.ctrlKey || e.metaKey) && e.shiftKey && !isClearDisabled) {
+      if (e.key === "Delete" && (e.ctrlKey || e.metaKey) && !isClearDisabled) {
         e.preventDefault();
         handleClearClick();
       }
     };
 
-    form.addEventListener("keydown", handleKeyDown);
-    return () => form.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isDisabled, onSubmit, isClearDisabled, handleClearClick]);
 
   return (
@@ -261,8 +258,7 @@ export function AnalysisForm({
           Wyczyść
           <KbdGroup className="ml-2 hidden sm:inline-flex">
             <Kbd>{modifierKey}</Kbd>
-            <Kbd>Shift</Kbd>
-            <Kbd>⌫</Kbd>
+            <Kbd>Del</Kbd>
           </KbdGroup>
         </Button>
       </div>
