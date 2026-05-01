@@ -18,6 +18,7 @@ describe("AnalysisCacheService", () => {
   it("should return cached result on cache hit", async () => {
     const cachedResult: TextAnalysisDto = {
       is_correct: true,
+      gamification_result: "correct",
       original_text: "Test text",
       translation: null,
     };
@@ -35,7 +36,7 @@ describe("AnalysisCacheService", () => {
     expect(result).toEqual(cachedResult);
     expect(mockSupabase.rpc).toHaveBeenCalledWith("get_cached_analysis", {
       p_text_hash: textHash as string,
-      p_mode: "grammar_and_spelling",
+      p_mode: "grammar_and_spelling:v2",
     });
   });
 
@@ -57,6 +58,7 @@ describe("AnalysisCacheService", () => {
     const service = new AnalysisCacheService(mockSupabase as never);
     const result: TextAnalysisDto = {
       is_correct: false,
+      gamification_result: "incorrect",
       original_text: "I are student",
       corrected_text: "I am a student",
       explanation: "Subject-verb agreement.",
@@ -71,7 +73,7 @@ describe("AnalysisCacheService", () => {
     expect(textHash).not.toBeNull();
     expect(mockSupabase.rpc).toHaveBeenCalledWith("set_cached_analysis", {
       p_text_hash: textHash as string,
-      p_mode: "grammar_and_spelling",
+      p_mode: "grammar_and_spelling:v2",
       p_original_text: "I are student",
       p_result: result,
     });

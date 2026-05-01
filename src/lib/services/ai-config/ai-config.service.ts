@@ -10,11 +10,13 @@ import betaColloquialPrompt from "@/lib/prompts/beta-colloquial-speech.prompt.md
 const TextAnalysisSchema = z.discriminatedUnion("is_correct", [
   z.object({
     is_correct: z.literal(true),
+    gamification_result: z.literal("correct"),
     original_text: z.string(),
     translation: z.string().nullable().optional(),
   }),
   z.object({
     is_correct: z.literal(false),
+    gamification_result: z.enum(["minor_issue", "incorrect"]),
     original_text: z.string(),
     corrected_text: z.string(),
     explanation: z.string(),

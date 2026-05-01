@@ -80,16 +80,27 @@ function createMockContext(request: Request, overrides?: Partial<MockAPIContext[
 describe("POST /api/analyze", () => {
   const mockCorrectResult: TextAnalysisDto = {
     is_correct: true,
+    gamification_result: "correct",
     original_text: "Hello world.",
     translation: "Witaj swiecie.",
   };
 
   const mockErrorResult: TextAnalysisDto = {
     is_correct: false,
+    gamification_result: "incorrect",
     original_text: "I gonna go home.",
     corrected_text: "I'm going to go home.",
     explanation: "Use 'going to' instead of 'gonna' in formal contexts.",
     translation: "Zamierzam isc do domu.",
+  };
+
+  const mockMinorIssueResult: TextAnalysisDto = {
+    is_correct: false,
+    gamification_result: "minor_issue",
+    original_text: "Hello world",
+    corrected_text: "Hello world.",
+    explanation: "Brakuje końcowej interpunkcji.",
+    translation: "Witaj świecie.",
   };
 
   const mockUser = { id: "user-123", email: "test@example.com" };
@@ -566,6 +577,7 @@ Third line`;
 
       const resultWithNullTranslation: TextAnalysisDto = {
         is_correct: true,
+        gamification_result: "correct",
         original_text: "Hello world.",
         translation: null,
       };
@@ -763,6 +775,20 @@ Third line`;
 
       expect(response.status).toBe(200);
       expect(mockRecordAnalysis).toHaveBeenCalledWith(false);
+    });
+
+    it("should record minor issues as successful analyses", async () => {
+      const request = createMockRequest({
+        text: "Hello world",
+        mode: "grammar_and_spelling",
+      });
+
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockMinorIssueResult);
+
+      const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
+
+      expect(response.status).toBe(200);
+      expect(mockRecordAnalysis).toHaveBeenCalledWith(true);
     });
 
     it("should NOT record analysis when user is not logged in", async () => {
