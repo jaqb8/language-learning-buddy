@@ -7,6 +7,7 @@ import { usePointsStore } from "../../lib/stores/points.store";
 import { useSettingsStore } from "../../lib/stores/settings.store";
 import { isFeatureEnabled } from "../../features/feature-flags.service";
 import { formatResetTime } from "../../lib/utils";
+import { isGamificationSuccess } from "../../lib/analysis-gamification";
 import { AnalysisForm } from "../features/AnalysisForm";
 import { Skeleton } from "../ui/skeleton";
 import { AnalysisResult } from "../features/AnalysisResult";
@@ -110,7 +111,10 @@ export function AnalyzeView() {
             analysisContext={state.analysisContext}
             onSave={handleSave}
             earnedPoint={
-              gamificationFeatureEnabled && vm.isPointsAwardingEnabled && state.result?.is_correct === true && isAuth
+              gamificationFeatureEnabled &&
+              vm.isPointsAwardingEnabled &&
+              Boolean(state.result && isGamificationSuccess(state.result)) &&
+              isAuth
             }
           />
         </section>

@@ -54,6 +54,8 @@ export interface AnalysisStats {
   totalAnalyses: number;
 }
 
+export type AnalysisGamificationResult = "correct" | "minor_issue" | "incorrect";
+
 /**
  * DTO for a learning item returned to the client.
  * It omits the `user_id` to avoid exposing it unnecessarily.
@@ -93,11 +95,13 @@ export interface PaginatedResponseDto<T> {
 export type TextAnalysisDto =
   | {
       is_correct: true;
+      gamification_result: "correct";
       original_text: string;
       translation: string | null;
     }
   | {
       is_correct: false;
+      gamification_result: "minor_issue" | "incorrect";
       original_text: string;
       corrected_text: string;
       explanation: string;

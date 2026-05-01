@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "../../../db/supabase.client";
 import type { AnalysisMode, TextAnalysisDto } from "../../../types";
 
+const ANALYSIS_CACHE_VERSION = "v2";
+
 export class AnalysisCacheService {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -19,7 +21,7 @@ export class AnalysisCacheService {
 
     const { data, error } = await this.supabase.rpc("get_cached_analysis", {
       p_text_hash: textHash,
-      p_mode: mode,
+      p_mode: this.getVersionedMode(mode),
     });
 
     if (error) {
@@ -50,7 +52,7 @@ export class AnalysisCacheService {
     const normalizedText = text.trim();
     const { error } = await this.supabase.rpc("set_cached_analysis", {
       p_text_hash: textHash,
-      p_mode: mode,
+      p_mode: this.getVersionedMode(mode),
       p_original_text: normalizedText,
       p_result: result,
     });
@@ -72,6 +74,10 @@ export class AnalysisCacheService {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
 
     return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  private getVersionedMode(mode: AnalysisMode): string {
+    return `${mode}:${ANALYSIS_CACHE_VERSION}`;
   }
 
   private async getWebCrypto(): Promise<Crypto | null> {

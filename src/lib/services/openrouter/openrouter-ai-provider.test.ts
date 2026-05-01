@@ -32,6 +32,7 @@ describe("OpenRouterAIProvider", () => {
 
   const mockResponse: TextAnalysisDto = {
     is_correct: true,
+    gamification_result: "correct",
     original_text: "Test text",
     translation: null,
   };

@@ -15,6 +15,7 @@ import { GamificationService } from "@/lib/services/gamification";
 import { SettingsService } from "@/lib/services/settings";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
 import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import { isGamificationSuccess } from "@/lib/analysis-gamification";
 import type { AnalysisMode } from "@/types";
 
 export const prerender = false;
@@ -62,7 +63,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       if (pointsEnabled) {
         try {
-          await new GamificationService(locals.supabase).recordAnalysis(result.is_correct);
+          await new GamificationService(locals.supabase).recordAnalysis(isGamificationSuccess(result));
         } catch (statsError) {
           console.error("Failed to record analysis stats:", statsError);
         }
