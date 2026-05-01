@@ -3,9 +3,16 @@ import { BetaBadge } from "@/components/shared/BetaBadge";
 
 interface EarnedPointBadgeProps {
   showBetaTag: boolean;
+  variant?: "correct" | "minor_issue";
 }
 
-export function EarnedPointBadge({ showBetaTag }: EarnedPointBadgeProps) {
+const DESCRIPTION: Record<NonNullable<EarnedPointBadgeProps["variant"]>, string> = {
+  correct:
+    "Każda poprawna analiza podnosi Twój poziom w rankingu i zbliża Cię do kolejnego poziomu znajomości języka. Tak trzymaj!",
+  minor_issue: "Analiza zawiera drobny błąd, ale nadal podnosi Twój poziom w rankingu. Tak trzymaj!",
+};
+
+export function EarnedPointBadge({ showBetaTag, variant = "correct" }: EarnedPointBadgeProps) {
   return (
     <div
       className="flex flex-col pt-2 items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-500"
@@ -16,10 +23,7 @@ export function EarnedPointBadge({ showBetaTag }: EarnedPointBadgeProps) {
         <span className="text-sm font-semibold text-green-700 dark:text-green-300">Awansujesz w rankingu!</span>
         {showBetaTag && <BetaBadge />}
       </div>
-      <p className="text-sm pt-1 md:max-w-md text-muted-foreground">
-        Każda poprawna analiza podnosi Twój poziom w rankingu i zbliża Cię do kolejnego poziomu znajomości języka. Tak
-        trzymaj!
-      </p>
+      <p className="text-sm pt-1 md:max-w-md text-center text-muted-foreground">{DESCRIPTION[variant]}</p>
     </div>
   );
 }

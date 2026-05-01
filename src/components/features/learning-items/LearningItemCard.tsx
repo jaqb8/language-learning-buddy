@@ -12,7 +12,7 @@ interface LearningItemCardProps {
 
 export function LearningItemCard({ item, onDelete }: LearningItemCardProps) {
   return (
-    <Card>
+    <Card data-test-id="learning-item-card">
       <CardHeader>
         <CardTitle className="text-base flex items-center justify-between">
           <span data-learning-item>Wyrażenie do nauki</span>

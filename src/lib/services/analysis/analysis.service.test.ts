@@ -17,6 +17,7 @@ describe("AnalysisService", () => {
   let mockProvider: ReturnType<typeof createMockAIProvider>;
   const mockResponse: TextAnalysisDto = {
     is_correct: true,
+    gamification_result: "correct",
     original_text: "Test text",
     translation: "Test tłumaczenie",
   };
@@ -100,12 +101,35 @@ describe("AnalysisService", () => {
 
     await expect(service.analyzeText(text, mode)).rejects.toThrow("provider error");
   });
+
+  it("should normalize an incorrect result when corrected text is unchanged", async () => {
+    const unchangedCorrection: TextAnalysisDto = {
+      is_correct: false,
+      gamification_result: "minor_issue",
+      original_text: "Yo, bro!",
+      corrected_text: "Yo, bro!",
+      explanation: "Brakuje wykrzyknika na końcu.",
+      translation: "Yo, ziom!",
+    };
+
+    mockProvider.analyzeText.mockResolvedValue(unchangedCorrection);
+
+    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling");
+
+    expect(result).toEqual({
+      is_correct: true,
+      gamification_result: "correct",
+      original_text: "Yo, bro!",
+      translation: "Yo, ziom!",
+    });
+  });
 });
 
 describe("AnalysisService - cache integration", () => {
   let mockProvider: ReturnType<typeof createMockAIProvider>;
   const mockResponse: TextAnalysisDto = {
     is_correct: true,
+    gamification_result: "correct",
     original_text: "Test text",
     translation: null,
   };
@@ -132,6 +156,7 @@ describe("AnalysisService - cache integration", () => {
   it("should return cached result when context is missing", async () => {
     const cachedResult: TextAnalysisDto = {
       is_correct: false,
+      gamification_result: "incorrect",
       original_text: "I are student",
       corrected_text: "I am a student",
       explanation: "Subject-verb agreement.",
@@ -145,6 +170,31 @@ describe("AnalysisService - cache integration", () => {
     const result = await service.analyzeText("I are student", "grammar_and_spelling");
 
     expect(result).toEqual(cachedResult);
+    expect(mockProvider.analyzeText).not.toHaveBeenCalled();
+  });
+
+  it("should normalize an unchanged correction from cache", async () => {
+    const cachedResult: TextAnalysisDto = {
+      is_correct: false,
+      gamification_result: "minor_issue",
+      original_text: "Yo, bro!",
+      corrected_text: "Yo, bro!",
+      explanation: "Brakuje wykrzyknika na końcu.",
+      translation: "Yo, ziom!",
+    };
+    const mockSupabase = {
+      rpc: vi.fn().mockResolvedValue({ data: cachedResult, error: null }),
+    };
+    const service = new AnalysisService(mockProvider, mockSupabase as never);
+
+    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling");
+
+    expect(result).toEqual({
+      is_correct: true,
+      gamification_result: "correct",
+      original_text: "Yo, bro!",
+      translation: "Yo, ziom!",
+    });
     expect(mockProvider.analyzeText).not.toHaveBeenCalled();
   });
 });

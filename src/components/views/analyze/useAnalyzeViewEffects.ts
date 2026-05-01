@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { TextAnalysisDto } from "@/types";
+import { isGamificationSuccess } from "@/lib/analysis-gamification";
 
 interface UseAnalyzeViewEffectsArgs {
   error: string | null;
@@ -52,7 +53,7 @@ export function useAnalyzeViewEffects({
     ) {
       if (lastResultRef.current !== resultTimestamp) {
         lastResultRef.current = resultTimestamp;
-        incrementStats(result.is_correct);
+        incrementStats(isGamificationSuccess(result));
       }
     }
   }, [

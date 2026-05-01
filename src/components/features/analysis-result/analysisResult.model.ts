@@ -43,6 +43,8 @@ export type AnalysisResultViewModel =
       };
       explanationMarkdown: string;
       saveCta: SaveCtaModel;
+      showEarnedPointBadge: boolean;
+      showGamificationBetaTag: boolean;
     };
 
 interface BuildAnalysisResultViewModelArgs {
@@ -121,5 +123,7 @@ export function buildAnalysisResultViewModel(args: BuildAnalysisResultViewModelA
     },
     explanationMarkdown: analysisResult.explanation,
     saveCta,
+    showEarnedPointBadge: args.features.gamificationEnabled && args.earnedPoint,
+    showGamificationBetaTag: args.features.gamificationBetaTagEnabled,
   };
 }

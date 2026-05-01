@@ -12,16 +12,27 @@ describe("analysisResult.model", () => {
 
   const correctResult: TextAnalysisDto = {
     is_correct: true,
+    gamification_result: "correct",
     original_text: "Hello world",
     translation: "Witaj swiecie",
   };
 
   const errorsResult: TextAnalysisDto = {
     is_correct: false,
+    gamification_result: "incorrect",
     original_text: "I is a student",
     corrected_text: "I am a student",
     explanation: "Use **am** with I.",
     translation: null,
+  };
+
+  const minorIssueResult: TextAnalysisDto = {
+    is_correct: false,
+    gamification_result: "minor_issue",
+    original_text: "Hello world",
+    corrected_text: "Hello world.",
+    explanation: "Brakuje końcowej interpunkcji.",
+    translation: "Witaj świecie.",
   };
 
   it("returns loading when isLoading=true", () => {
@@ -99,6 +110,23 @@ describe("analysisResult.model", () => {
     expect(vm.kind).toBe("errors");
     if (vm.kind !== "errors") throw new Error("Unexpected VM kind");
     expect(vm.saveCta.kind).toBe("save");
+    expect(vm.showEarnedPointBadge).toBe(false);
+  });
+
+  it("shows earned point badge for minor issue results", () => {
+    const vm = buildAnalysisResultViewModel({
+      isLoading: false,
+      analysisResult: minorIssueResult,
+      isSaved: false,
+      analysisMode: "grammar_and_spelling",
+      isAuth: true,
+      earnedPoint: true,
+      features: baseFeatures,
+    });
+
+    expect(vm.kind).toBe("errors");
+    if (vm.kind !== "errors") throw new Error("Unexpected VM kind");
+    expect(vm.showEarnedPointBadge).toBe(true);
   });
 
   it("returns errors with login CTA when unauthenticated and not saved", () => {

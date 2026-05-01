@@ -34,6 +34,8 @@ export function AnalysisResultView({ vm, resultRef, onSaveClick }: AnalysisResul
             textDiff={vm.textDiff}
             explanationMarkdown={vm.explanationMarkdown}
             saveCta={vm.saveCta}
+            showEarnedPointBadge={vm.showEarnedPointBadge}
+            showGamificationBetaTag={vm.showGamificationBetaTag}
             onSaveClick={onSaveClick}
           />
         </div>

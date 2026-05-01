@@ -3,6 +3,7 @@ import { getMockAnalysis } from "./analysis.mocks";
 import type { SupabaseClient } from "../../../db/supabase.client";
 import { AnalysisCacheService } from "./analysis-cache.service";
 import { USE_MOCKS } from "astro:env/server";
+import { normalizeAnalysisResult } from "@/lib/analysis-gamification";
 
 export class AnalysisService {
   private useMocks: boolean;
@@ -37,14 +38,14 @@ export class AnalysisService {
       try {
         const cachedResult = await this.cacheService?.get(text, mode);
         if (cachedResult) {
-          return cachedResult;
+          return normalizeAnalysisResult(cachedResult);
         }
       } catch (error) {
         console.error("Cache lookup failed:", error);
       }
     }
 
-    const result = await this.aiProvider.analyzeText(mode, text, trimmedContext);
+    const result = normalizeAnalysisResult(await this.aiProvider.analyzeText(mode, text, trimmedContext));
 
     if (shouldUseCache) {
       try {

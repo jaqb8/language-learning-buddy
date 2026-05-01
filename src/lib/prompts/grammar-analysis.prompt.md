@@ -11,6 +11,14 @@ Kontekst może również wpływać na to, czy czas użyty w tekście jest popraw
 
 Jeśli tekst jest poprawny gramatycznie, zwróć informację, że tekst jest poprawny wraz z tłumaczeniem.
 
+Pole `gamification_result` określa wpływ wyniku na ranking:
+
+- `correct` - tekst jest poprawny i `is_correct` jest `true`
+- `minor_issue` - tekst ma wyłącznie drobną sugestię interpunkcyjną, np. brak kropki, pytajnika albo wykrzyknika na końcu zdania; wtedy zwróć `is_correct: false`, pokaż poprawkę, ale ustaw `gamification_result: "minor_issue"`
+- `incorrect` - tekst zawiera błąd gramatyczny, ortograficzny, składniowy lub znaczeniowy
+
+Jeśli `corrected_text` miałby być identyczny z `original_text` po usunięciu spacji z początku i końca, NIE zwracaj poprawki. Zwróć `is_correct: true` i `gamification_result: "correct"`.
+
 Jeśli tekst zawiera błędy gramatyczne:
 
 - Popraw tekst zachowując jego oryginalny sens i styl
@@ -22,8 +30,9 @@ Jeśli tekst zawiera błędy gramatyczne:
   - NIE używaj niepotrzebnych nagłówków takich jak "Analiza tekstu", "Analiza błędu", "Dlaczego poprawka jest lepsza" itp. - przejdź od razu do wyjaśnienia
   - Unikaj zbędnych wyrażeń wprowadzających - skup się na merytorycznym wyjaśnieniu
   - NIE powtarzaj treści oryginalnego zdania w explanation - użytkownik już widzi oryginalny tekst, więc skup się tylko na wyjaśnieniu błędów i poprawek
+  - NIE dodawaj podsumowań ani komentarzy o klasyfikacji wyniku, np. "To jedyny drobny błąd", "To drobna sugestia", "Poza tym tekst jest poprawny", "Analiza zawiera minor issue". Wyjaśnij wyłącznie konkretny błąd i poprawkę.
 - Skup się na błędach gramatycznych, nie na stylu czy słownictwie.
-- **WAŻNE: `explanation` nie może przekraczać 500 znaków (włącznie ze wszystkimi znacznikami Markdown). Jeśli wyjaśnienie jest dłuższe, skróć je do maksymalnej długości.**
+- **WAŻNE: `explanation` nie może przekraczać 500 znaków (włącznie ze wszystkimi znacznikami Markdown). Jeśli wyjaśnienie jest dłuższe, skróć je do maksymalnej długości. To jest wewnętrzna reguła formatowania - NIE dodawaj do `explanation` informacji typu "Długość", "Liczba znaków", "142 znaki" ani żadnego raportu o limicie znaków.**
 - Formatuj tekst tak, aby był przejrzysty - używaj akapitów i odpowiednich odstępów między sekcjami.
 
 Odpowiadaj wyłącznie w formacie JSON zgodnym z dostarczonym schematem.
@@ -35,6 +44,7 @@ Jeśli tekst jest poprawny:
 ```json
 {
   "is_correct": true,
+  "gamification_result": "correct",
   "original_text": "The original text",
   "translation": "Tłumaczenie oryginalnego tekstu na polski"
 }
@@ -45,6 +55,7 @@ Jeśli tekst zawiera błędy:
 ```json
 {
   "is_correct": false,
+  "gamification_result": "incorrect",
   "original_text": "The original text",
   "corrected_text": "The corrected text",
   "explanation": "The explanation of the correction",

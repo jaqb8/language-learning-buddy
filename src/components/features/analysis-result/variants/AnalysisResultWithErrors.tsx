@@ -5,6 +5,7 @@ import { AnalysisModeBadge } from "@/components/shared/AnalysisModeBadge";
 import type { AnalysisMode } from "@/types";
 import type { SaveCtaModel } from "../analysisResult.model";
 import { SaveToLearningListButton } from "../components/SaveToLearningListButton";
+import { EarnedPointBadge } from "../components/EarnedPointBadge";
 
 interface AnalysisResultWithErrorsProps {
   analysisMode: AnalysisMode;
@@ -15,6 +16,8 @@ interface AnalysisResultWithErrorsProps {
   };
   explanationMarkdown: string;
   saveCta: SaveCtaModel;
+  showEarnedPointBadge: boolean;
+  showGamificationBetaTag: boolean;
   onSaveClick: () => void;
 }
 
@@ -23,6 +26,8 @@ export function AnalysisResultWithErrors({
   textDiff,
   explanationMarkdown,
   saveCta,
+  showEarnedPointBadge,
+  showGamificationBetaTag,
   onSaveClick,
 }: AnalysisResultWithErrorsProps) {
   return (
@@ -60,6 +65,8 @@ export function AnalysisResultWithErrors({
             </ReactMarkdown>
           </div>
         </div>
+
+        {showEarnedPointBadge && <EarnedPointBadge showBetaTag={showGamificationBetaTag} variant="minor_issue" />}
       </CardContent>
       {saveCta.kind !== "hidden" && (
         <CardFooter>
