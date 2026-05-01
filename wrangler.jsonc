@@ -16,7 +16,7 @@
     "staging": {
       "name": "language-learning-buddy-staging",
       "vars": {
-        "SUPABASE_URL": "https://ktnthoafylnotwieeowv.supabase.co",
+        "SUPABASE_URL": "https://supabase.jaqblab.online",
         "USE_MOCKS": false,
         "RATE_LIMIT_MAX_REQUESTS": 10,
         "RATE_LIMIT_WINDOW_MS": 60000,
