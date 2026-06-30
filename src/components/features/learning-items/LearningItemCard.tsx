@@ -2,8 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TextDiff } from "@/components/shared/TextDiff";
 import { AnalysisModeBadge } from "@/components/shared/AnalysisModeBadge";
+import { AnalysisLanguageBadge } from "@/components/shared/AnalysisLanguageBadge";
 import ReactMarkdown from "react-markdown";
 import type { LearningItemViewModel } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 interface LearningItemCardProps {
   item: LearningItemViewModel;
@@ -11,15 +13,17 @@ interface LearningItemCardProps {
 }
 
 export function LearningItemCard({ item, onDelete }: LearningItemCardProps) {
+  const { t } = useI18n();
   return (
     <Card data-test-id="learning-item-card">
       <CardHeader>
         <CardTitle className="text-base flex items-center justify-between">
-          <span data-learning-item>Wyrażenie do nauki</span>
+          <span data-learning-item>{t("learning.item")}</span>
           <span className="text-sm font-normal text-muted-foreground">{item.formatted_created_at}</span>
         </CardTitle>
-        <div className="pt-2">
+        <div className="flex flex-wrap gap-2 pt-2">
           <AnalysisModeBadge mode={item.analysis_mode} className="text-xs" />
+          <AnalysisLanguageBadge language={item.analysis_language} className="text-xs" />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -29,7 +33,7 @@ export function LearningItemCard({ item, onDelete }: LearningItemCardProps) {
           translation={item.translation}
         />
         <div>
-          <h4 className="mb-2 text-sm font-semibold px-2">Wyjaśnienie:</h4>
+          <h4 className="mb-2 text-sm font-semibold px-2">{t("analysis.result.explanation")}</h4>
           <div className="text-sm leading-relaxed rounded-md bg-muted p-3">
             <ReactMarkdown
               components={{
@@ -48,7 +52,7 @@ export function LearningItemCard({ item, onDelete }: LearningItemCardProps) {
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button variant="destructive" size="sm" onClick={() => onDelete(item.id)}>
-          Usuń
+          {t("common.delete")}
         </Button>
       </CardFooter>
     </Card>

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { usePointsStore } from "@/lib/stores/points.store";
 import { useSettingsStore } from "@/lib/stores/settings.store";
@@ -5,6 +6,7 @@ import { isFeatureEnabled, isFeatureBeta } from "@/features/feature-flags.servic
 import { buildHeaderVM } from "./header/header.model";
 import { HeaderDesktop } from "./header/HeaderDesktop";
 import { HeaderMobile } from "./header/HeaderMobile";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
 interface MenuItem {
   title: string;
@@ -15,6 +17,7 @@ interface MenuItem {
 }
 
 interface Navbar1Props {
+  locale?: AppLocale;
   logo?: {
     url: string;
     src: string;
@@ -24,18 +27,25 @@ interface Navbar1Props {
   menu?: MenuItem[];
 }
 
-export function Header({
+export function Header({ locale = "en", ...props }: Navbar1Props) {
+  return (
+    <I18nProvider locale={locale}>
+      <HeaderContent {...props} />
+    </I18nProvider>
+  );
+}
+
+function HeaderContent({
   logo = {
     url: "/",
     src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/shadcnblockscom-icon.svg",
     alt: "Language Learning Buddy",
     title: "Language Learning Buddy",
   },
-  menu = [
-    { title: "Analiza", url: "/" },
-    { title: "Moja lista", url: "/learning-list" },
-  ],
+  menu,
 }: Navbar1Props) {
+  const [isHydrated, setIsHydrated] = useState(false);
+  const { t } = useI18n();
   const { user, isAuth, isAuthInitialized } = useAuthStore();
   const { correctAnalyses, totalAnalyses } = usePointsStore();
   const { pointsEnabled: pointsSettingEnabled, isLoaded: areSettingsLoaded } = useSettingsStore();
@@ -43,10 +53,18 @@ export function Header({
   const isLearningItemsFeatureEnabled = isFeatureEnabled("learning-items");
   const gamificationFeatureEnabled = isFeatureEnabled("gamification");
   const gamificationBetaTagEnabled = isFeatureBeta("gamification");
+  const resolvedMenu = menu ?? [
+    { title: t("header.analyze"), url: "/" },
+    { title: t("header.learningList"), url: "/learning-list" },
+  ];
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const vm = buildHeaderVM({
     logo,
-    menu,
+    menu: resolvedMenu,
     user,
     isAuth,
     isAuthInitialized,
@@ -61,7 +79,7 @@ export function Header({
   });
 
   return (
-    <section className="py-4">
+    <section className="py-4" data-test-id="header" data-hydrated={isHydrated ? "true" : "false"}>
       <HeaderDesktop vm={vm} />
       <HeaderMobile vm={vm} />
     </section>

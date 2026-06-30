@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useReducer } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 import { isFeatureBeta } from "@/features/feature-flags.service";
 import { useSettingsStore } from "@/lib/stores/settings.store";
 import { usePointsStore } from "@/lib/stores/points.store";
@@ -11,16 +12,14 @@ type ControllerState =
   | { kind: "confirmDisablePoints" }
   | { kind: "savingPointsEnable" }
   | { kind: "savingPointsDisable" }
-  | { kind: "savingContext"; enabled: boolean }
-  | { kind: "savingBetaModes"; enabled: boolean };
+  | { kind: "savingContext"; enabled: boolean };
 
 type Action =
   | { type: "IDLE" }
   | { type: "CONFIRM_DISABLE_POINTS" }
   | { type: "SAVING_POINTS_ENABLE" }
   | { type: "SAVING_POINTS_DISABLE" }
-  | { type: "SAVING_CONTEXT"; enabled: boolean }
-  | { type: "SAVING_BETA_MODES"; enabled: boolean };
+  | { type: "SAVING_CONTEXT"; enabled: boolean };
 
 function reducer(_state: ControllerState, action: Action): ControllerState {
   switch (action.type) {
@@ -34,13 +33,12 @@ function reducer(_state: ControllerState, action: Action): ControllerState {
       return { kind: "savingPointsDisable" };
     case "SAVING_CONTEXT":
       return { kind: "savingContext", enabled: action.enabled };
-    case "SAVING_BETA_MODES":
-      return { kind: "savingBetaModes", enabled: action.enabled };
   }
 }
 
 export function useSettingsViewController() {
-  const { pointsEnabled, contextEnabled, betaModesEnabled, isLoaded, initializeSettings } = useSettingsStore();
+  const { t } = useI18n();
+  const { pointsEnabled, contextEnabled, isLoaded, initializeSettings } = useSettingsStore();
   const clearStats = usePointsStore((state) => state.clearStats);
   const setStats = usePointsStore((state) => state.setStats);
   const { updateSettings, resetPoints } = useSettingsActions();
@@ -48,15 +46,12 @@ export function useSettingsViewController() {
   const [state, dispatch] = useReducer(reducer, { kind: "idle" });
 
   const gamificationBetaTagEnabled = isFeatureBeta("gamification");
-  const betaModesBetaTagEnabled = isFeatureBeta("analysis-modes-beta");
 
   const currentPointsEnabled = useMemo(() => (isLoaded ? pointsEnabled : true), [isLoaded, pointsEnabled]);
   const currentContextEnabled = useMemo(() => (isLoaded ? contextEnabled : true), [isLoaded, contextEnabled]);
-  const currentBetaModesEnabled = useMemo(() => (isLoaded ? betaModesEnabled : false), [isLoaded, betaModesEnabled]);
 
   const isSavingPoints = state.kind === "savingPointsEnable" || state.kind === "savingPointsDisable";
   const isSavingContext = state.kind === "savingContext";
-  const isSavingBetaModes = state.kind === "savingBetaModes";
   const isConfirmOpen = state.kind === "confirmDisablePoints" || state.kind === "savingPointsDisable";
 
   const setConfirmOpen = useCallback((open: boolean) => {
@@ -81,13 +76,13 @@ export function useSettingsViewController() {
         toast.error(statsResult.errorMessage);
       }
 
-      toast.success("Włączono śledzenie postępów.");
+      toast.success(t("settings.toast.pointsEnabled"));
     } else if (result.errorMessage) {
       toast.error(result.errorMessage);
     }
 
     dispatch({ type: "IDLE" });
-  }, [fetchStats, initializeSettings, setStats, updateSettings]);
+  }, [fetchStats, initializeSettings, setStats, t, updateSettings]);
 
   const confirmDisablePoints = useCallback(async () => {
     dispatch({ type: "SAVING_POINTS_DISABLE" });
@@ -118,9 +113,9 @@ export function useSettingsViewController() {
 
     clearStats();
     initializeSettings(updated.data);
-    toast.success("Wyłączono śledzenie postępów i usunięto historię.");
+    toast.success(t("settings.toast.pointsDisabled"));
     dispatch({ type: "IDLE" });
-  }, [clearStats, initializeSettings, resetPoints, updateSettings]);
+  }, [clearStats, initializeSettings, resetPoints, t, updateSettings]);
 
   const toggleContext = useCallback(
     async (enabled: boolean) => {
@@ -128,28 +123,13 @@ export function useSettingsViewController() {
       const updated = await updateSettings({ contextEnabled: enabled });
       if (updated.data) {
         initializeSettings(updated.data);
-        toast.success(enabled ? "Włączono kontekst analizy." : "Wyłączono kontekst analizy.");
+        toast.success(enabled ? t("settings.toast.contextEnabled") : t("settings.toast.contextDisabled"));
       } else if (updated.errorMessage) {
         toast.error(updated.errorMessage);
       }
       dispatch({ type: "IDLE" });
     },
-    [initializeSettings, updateSettings]
-  );
-
-  const toggleBetaModes = useCallback(
-    async (enabled: boolean) => {
-      dispatch({ type: "SAVING_BETA_MODES", enabled });
-      const updated = await updateSettings({ betaModesEnabled: enabled });
-      if (updated.data) {
-        initializeSettings(updated.data);
-        toast.success(enabled ? "Włączono tryby beta." : "Wyłączono tryby beta.");
-      } else if (updated.errorMessage) {
-        toast.error(updated.errorMessage);
-      }
-      dispatch({ type: "IDLE" });
-    },
-    [initializeSettings, updateSettings]
+    [initializeSettings, t, updateSettings]
   );
 
   const onPointsCheckedChange = useCallback(
@@ -166,18 +146,14 @@ export function useSettingsViewController() {
   return {
     isLoaded,
     gamificationBetaTagEnabled,
-    betaModesBetaTagEnabled,
     currentPointsEnabled,
     currentContextEnabled,
-    currentBetaModesEnabled,
     isSavingPoints,
     isSavingContext,
-    isSavingBetaModes,
     isConfirmOpen,
     setConfirmOpen,
     onPointsCheckedChange,
     confirmDisablePoints,
     toggleContext,
-    toggleBetaModes,
   };
 }

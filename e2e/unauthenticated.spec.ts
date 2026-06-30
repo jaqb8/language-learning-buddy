@@ -50,7 +50,7 @@ test.describe("Unauthenticated User Tests", () => {
     // Assert - Login button is shown instead of save button
     await expect(analyzePage.result.saveButton).toBeVisible();
     const saveButtonText = await analyzePage.result.saveButton.textContent();
-    expect(saveButtonText?.toLowerCase()).toMatch(/zaloguj/i);
+    expect(saveButtonText?.toLowerCase()).toMatch(/zaloguj|log in/i);
 
     // Assert - User is still not logged in
     await expect(header.logoutButton).not.toBeVisible();

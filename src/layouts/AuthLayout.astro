@@ -3,15 +3,17 @@ import Layout from "./Layout.astro";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthInitializer } from "@/components/shared/AuthInitializer";
 import { ModeToggle } from "@/components/shared/ModeToggle";
+import { LanguageSelector } from "@/components/shared/LanguageSelector";
 
 interface Props {
   title?: string;
 }
 
 const { title = "Language Learning Buddy" } = Astro.props;
+const { locale } = Astro.locals;
 ---
 
-<Layout title={title}>
+<Layout title={title} locale={locale}>
   <AuthInitializer user={null} client:only="react" />
   <header class="py-4 px-8">
     <div class="flex items-center justify-between">
@@ -23,7 +25,10 @@ const { title = "Language Learning Buddy" } = Astro.props;
         />
         <span class="text-xl font-semibold tracking-tighter">Language Learning Buddy</span>
       </a>
-      <ModeToggle client:load />
+      <div class="flex items-center gap-2">
+        <LanguageSelector locale={locale} variant="compact" client:load />
+        <ModeToggle locale={locale} client:load />
+      </div>
     </div>
   </header>
   <main class="min-h-[calc(100vh-5rem)] flex items-center justify-center bg-background px-4 py-12">

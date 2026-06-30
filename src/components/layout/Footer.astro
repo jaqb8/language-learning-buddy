@@ -1,6 +1,11 @@
 ---
 import pkg from "../../../package.json";
 import { PUBLIC_ENV_NAME } from "astro:env/client";
+import { createTranslator, DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
+
+interface Props {
+  locale?: AppLocale;
+}
 
 const version = pkg.version;
 const githubUrl = "https://github.com/jaqb8/10xdevs-project";
@@ -8,6 +13,8 @@ const releaseUrl = `${githubUrl}/releases/tag/v${version}`;
 
 let currentYear = new Date().getFullYear();
 let versionName = PUBLIC_ENV_NAME !== "production" ? `${version}-${PUBLIC_ENV_NAME}` : version;
+const { locale = DEFAULT_APP_LOCALE } = Astro.props;
+const t = createTranslator(locale);
 ---
 
 <footer class="border-t bg-muted/20 md:mt-auto mt-16">
@@ -24,8 +31,7 @@ let versionName = PUBLIC_ENV_NAME !== "production" ? `${version}-${PUBLIC_ENV_NA
           <span class="text-sm font-semibold">Language Learning Buddy</span>
         </div>
         <p class="text-sm text-muted-foreground max-w-md text-center md:text-left">
-          Osobisty asystent do nauki języka angielskiego. Identyfikuj i koryguj powtarzające się błędy gramatyczne z
-          pomocą AI.
+          {t("footer.description")}
         </p>
       </div>
 
@@ -37,14 +43,14 @@ let versionName = PUBLIC_ENV_NAME !== "production" ? `${version}-${PUBLIC_ENV_NA
         target="_blank"
         rel="noopener noreferrer"
         class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >© {currentYear} Jakub Aniszewski IT Solutions. All rights reserved.</a
+        >© {currentYear} Jakub Aniszewski IT Solutions. {t("footer.rights")}</a
       >
       <div class="flex items-center gap-3">
         <a
           href={releaseUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Release version ${version}`}
+          aria-label={t("footer.release", { version })}
           class="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           v{versionName}
@@ -53,7 +59,7 @@ let versionName = PUBLIC_ENV_NAME !== "production" ? `${version}-${PUBLIC_ENV_NA
           href={githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="GitHub repository"
+          aria-label={t("footer.github")}
           class="hover:opacity-80 transition-opacity"
         >
           <svg

@@ -7,15 +7,24 @@ import { DeleteConfirmationDialog } from "@/components/features/learning-items/D
 import { LoadingSkeleton } from "@/components/features/learning-items/LoadingSkeleton";
 import { ErrorMessage } from "@/components/features/learning-items/ErrorMessage";
 import type { LearningItemDto, PaginatedResponseDto } from "@/types";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
 interface LearningItemsViewProps {
+  locale?: AppLocale;
   initialData?: PaginatedResponseDto<LearningItemDto> | null;
   initialLoadError?: boolean;
 }
 
-const INITIAL_LOAD_ERROR_MESSAGE = "Nie udało się załadować listy. Spróbuj odświeżyć stronę.";
+export function LearningItemsView({ locale = "en", ...props }: LearningItemsViewProps) {
+  return (
+    <I18nProvider locale={locale}>
+      <LearningItemsViewContent {...props} />
+    </I18nProvider>
+  );
+}
 
-export function LearningItemsView({ initialData, initialLoadError }: LearningItemsViewProps) {
+function LearningItemsViewContent({ initialData, initialLoadError }: Omit<LearningItemsViewProps, "locale">) {
+  const { t } = useI18n();
   const {
     viewModels,
     paginationViewModel,
@@ -44,13 +53,13 @@ export function LearningItemsView({ initialData, initialLoadError }: LearningIte
 
   const handleConfirmDelete = async () => {
     await confirmDelete();
-    toast.success("Element został usunięty");
+    toast.success(t("learning.deleted"));
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-8">Lista wyrażeń do nauki</h1>
+        <h1 className="text-3xl font-bold mb-8">{t("learning.title")}</h1>
         <LoadingSkeleton />
       </div>
     );
@@ -59,15 +68,15 @@ export function LearningItemsView({ initialData, initialLoadError }: LearningIte
   if ((error || initialLoadError) && !viewModels.length) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-8">Lista wyrażeń do nauki</h1>
-        <ErrorMessage message={error || INITIAL_LOAD_ERROR_MESSAGE} />
+        <h1 className="text-3xl font-bold mb-8">{t("learning.title")}</h1>
+        <ErrorMessage message={error || t("learning.loadError")} />
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Lista wyrażeń do nauki</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("learning.title")}</h1>
 
       <LearningItemsList items={viewModels} onDeleteItem={handleDeleteItem} />
 

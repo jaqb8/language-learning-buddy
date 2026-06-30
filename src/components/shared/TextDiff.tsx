@@ -4,6 +4,7 @@ import { OriginalDiffText } from "./text-diff/OriginalDiffText";
 import { CorrectedDiffText } from "./text-diff/CorrectedDiffText";
 import { TranslationToggle } from "./text-diff/TranslationToggle";
 import { CopyCorrectedTextButton } from "./text-diff/CopyCorrectedTextButton";
+import { useI18n } from "@/lib/i18n";
 
 interface TextDiffProps {
   originalText: string;
@@ -12,6 +13,7 @@ interface TextDiffProps {
 }
 
 export function TextDiff({ originalText, correctedText, translation }: TextDiffProps) {
+  const { t } = useI18n();
   const [showTranslation, setShowTranslation] = useState(false);
 
   const segments = useMemo(() => buildTextDiffSegments({ originalText, correctedText }), [originalText, correctedText]);
@@ -20,18 +22,18 @@ export function TextDiff({ originalText, correctedText, translation }: TextDiffP
     <div
       className="rounded-md bg-muted p-4"
       role="region"
-      aria-label="Porównanie tekstu oryginalnego z poprawionym"
+      aria-label={t("analysis.result.comparisonAria")}
       data-test-id="text-diff-container"
     >
       <div className="space-y-4">
         <div>
-          <h4 className="mb-2 text-sm font-semibold text-muted-foreground">Oryginalny tekst:</h4>
+          <h4 className="mb-2 text-sm font-semibold text-muted-foreground">{t("analysis.result.original")}</h4>
           <OriginalDiffText segments={segments} />
         </div>
 
         <div className="border-t border-border pt-3">
           <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-muted-foreground">Poprawiony tekst:</h4>
+            <h4 className="text-sm font-semibold text-muted-foreground">{t("analysis.result.corrected")}</h4>
             <div className="flex items-center gap-2">
               {translation && (
                 <TranslationToggle isVisible={showTranslation} onToggle={() => setShowTranslation((prev) => !prev)} />

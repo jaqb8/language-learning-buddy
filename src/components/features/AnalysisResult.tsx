@@ -2,15 +2,17 @@ import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { usePendingAnalysisStore } from "@/lib/stores/pending-analysis.store";
 import { isFeatureEnabled, isFeatureBeta } from "@/features/feature-flags.service";
-import type { TextAnalysisDto, CreateLearningItemCommand, AnalysisMode } from "../../types";
+import type { TextAnalysisDto, CreateLearningItemCommand, AnalysisLanguage, AnalysisMode } from "../../types";
 import { buildAnalysisResultViewModel } from "./analysis-result/analysisResult.model";
 import { AnalysisResultView } from "./analysis-result/AnalysisResultView";
+import { useI18n } from "@/lib/i18n";
 
 interface AnalysisResultProps {
   isLoading: boolean;
   analysisResult: TextAnalysisDto | null;
   isSaved: boolean;
   analysisMode: AnalysisMode;
+  analysisLanguage: AnalysisLanguage;
   analysisContext?: string;
   onSave: (item: CreateLearningItemCommand) => void;
   earnedPoint?: boolean;
@@ -21,10 +23,12 @@ export function AnalysisResult({
   analysisResult,
   isSaved,
   analysisMode,
+  analysisLanguage,
   analysisContext,
   onSave,
   earnedPoint = false,
 }: AnalysisResultProps) {
+  const { t } = useI18n();
   const resultRef = useRef<HTMLDivElement | null>(null);
   const { isAuth } = useAuthStore();
   const { setPendingAnalysis } = usePendingAnalysisStore();
@@ -47,6 +51,7 @@ export function AnalysisResult({
         setPendingAnalysis({
           result: analysisResult,
           mode: analysisMode,
+          language: analysisLanguage,
           originalText: analysisResult.original_text,
           analysisContext: analysisContext?.trim() || undefined,
           timestamp: Date.now(),
@@ -63,11 +68,12 @@ export function AnalysisResult({
         corrected_sentence: analysisResult.corrected_text,
         explanation: analysisResult.explanation,
         analysis_mode: analysisMode,
+        analysis_language: analysisLanguage,
         translation: analysisResult.translation ?? null,
       };
       onSave(command);
     }
-  }, [analysisResult, onSave, isAuth, analysisMode, analysisContext, setPendingAnalysis]);
+  }, [analysisResult, onSave, isAuth, analysisMode, analysisLanguage, analysisContext, setPendingAnalysis]);
 
   const vm = buildAnalysisResultViewModel({
     isLoading,
@@ -76,6 +82,7 @@ export function AnalysisResult({
     analysisMode,
     isAuth,
     earnedPoint,
+    t,
     features: {
       authEnabled: isAuthFeatureEnabled,
       learningItemsEnabled: isLearningItemsFeatureEnabled,

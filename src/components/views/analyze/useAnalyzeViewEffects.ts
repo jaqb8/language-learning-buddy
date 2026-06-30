@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { TextAnalysisDto } from "@/types";
 import { isGamificationSuccess } from "@/lib/analysis-gamification";
+import { useI18n } from "@/lib/i18n";
 
 interface UseAnalyzeViewEffectsArgs {
   error: string | null;
@@ -34,6 +35,7 @@ export function useAnalyzeViewEffects({
   isPointsAwardingEnabled,
   incrementStats,
 }: UseAnalyzeViewEffectsArgs) {
+  const { t } = useI18n();
   const lastResultRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -80,14 +82,14 @@ export function useAnalyzeViewEffects({
 
   useEffect(() => {
     if (isCurrentResultSaved) {
-      toast.success("Zapisano na liście Do nauki!", {
+      toast.success(t("analysis.result.savedToast"), {
         action: {
-          label: "Przejdź do listy",
+          label: t("analysis.result.openList"),
           onClick: () => {
             window.location.href = "/learning-list";
           },
         },
       });
     }
-  }, [isCurrentResultSaved]);
+  }, [isCurrentResultSaved, t]);
 }

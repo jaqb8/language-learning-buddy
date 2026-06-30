@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { TextAnalysisDto, AnalysisMode } from "@/types";
+import type { TextAnalysisDto, AnalysisLanguage, AnalysisMode } from "@/types";
 
 export interface PendingAnalysisState {
   result: TextAnalysisDto;
   mode: AnalysisMode;
+  language: AnalysisLanguage;
   originalText: string;
   analysisContext?: string;
   timestamp?: number;

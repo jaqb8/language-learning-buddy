@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useI18n } from "@/lib/i18n";
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -17,19 +18,18 @@ interface DeleteConfirmationDialogProps {
 }
 
 export function DeleteConfirmationDialog({ isOpen, isPending, onCancel, onConfirm }: DeleteConfirmationDialogProps) {
+  const { t } = useI18n();
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Czy na pewno chcesz usunąć ten element?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Ta akcja jest nieodwracalna. Element zostanie trwale usunięty z twojej listy.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{t("learning.deleteTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("learning.deleteDescription")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Anuluj</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={isPending}>
-            {isPending ? "Usuwanie..." : "Potwierdź"}
+            {isPending ? t("common.deleting") : t("common.confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

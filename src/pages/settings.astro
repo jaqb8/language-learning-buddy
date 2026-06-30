@@ -1,12 +1,16 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { SettingsView } from "../components/views/SettingsView";
+import { createTranslator } from "@/lib/i18n";
 
 if (!Astro.locals.user) {
   return Astro.redirect("/login");
 }
+
+const { locale } = Astro.locals;
+const t = createTranslator(locale);
 ---
 
-<AppLayout title="Ustawienia - Language Learning Buddy">
-  <SettingsView client:load />
+<AppLayout title={t("page.settings.title")}>
+  <SettingsView locale={locale} client:load />
 </AppLayout>

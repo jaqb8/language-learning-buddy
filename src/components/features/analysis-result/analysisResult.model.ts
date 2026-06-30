@@ -1,26 +1,27 @@
 import type { AnalysisMode, TextAnalysisDto } from "@/types";
+import { createTranslator, type Translator } from "@/lib/i18n";
 
 export type SaveCtaModel =
   | { kind: "hidden" }
   | {
       kind: "saved";
       disabled: true;
-      ariaLabel: "Element już zapisany na liście";
-      label: "Zapisano ✓";
+      ariaLabel: string;
+      label: string;
       emphasizeUnauthHover: false;
     }
   | {
       kind: "save";
       disabled: false;
-      ariaLabel: "Dodaj ten błąd do listy Do nauki";
-      label: "Dodaj do listy Do nauki";
+      ariaLabel: string;
+      label: string;
       emphasizeUnauthHover: false;
     }
   | {
       kind: "login";
       disabled: false;
-      ariaLabel: "Zaloguj się, aby dodać do listy";
-      label: "Zaloguj się, aby dodać do listy";
+      ariaLabel: string;
+      label: string;
       emphasizeUnauthHover: true;
     };
 
@@ -54,6 +55,7 @@ interface BuildAnalysisResultViewModelArgs {
   analysisMode: AnalysisMode;
   isAuth: boolean;
   earnedPoint: boolean;
+  t?: Translator;
   features: {
     authEnabled: boolean;
     learningItemsEnabled: boolean;
@@ -64,6 +66,7 @@ interface BuildAnalysisResultViewModelArgs {
 
 export function buildAnalysisResultViewModel(args: BuildAnalysisResultViewModelArgs): AnalysisResultViewModel {
   const { isLoading, analysisResult } = args;
+  const t = args.t ?? createTranslator("en");
 
   if (isLoading) {
     return { kind: "loading" };
@@ -90,24 +93,24 @@ export function buildAnalysisResultViewModel(args: BuildAnalysisResultViewModelA
       saveCta = {
         kind: "saved",
         disabled: true,
-        ariaLabel: "Element już zapisany na liście",
-        label: "Zapisano ✓",
+        ariaLabel: t("analysis.result.savedAria"),
+        label: t("analysis.result.saved"),
         emphasizeUnauthHover: false,
       };
     } else if (args.isAuth) {
       saveCta = {
         kind: "save",
         disabled: false,
-        ariaLabel: "Dodaj ten błąd do listy Do nauki",
-        label: "Dodaj do listy Do nauki",
+        ariaLabel: t("analysis.result.saveAria"),
+        label: t("analysis.result.save"),
         emphasizeUnauthHover: false,
       };
     } else {
       saveCta = {
         kind: "login",
         disabled: false,
-        ariaLabel: "Zaloguj się, aby dodać do listy",
-        label: "Zaloguj się, aby dodać do listy",
+        ariaLabel: t("analysis.result.loginToSave"),
+        label: t("analysis.result.loginToSave"),
         emphasizeUnauthHover: true,
       };
     }

@@ -1,4 +1,5 @@
-import type { TextAnalysisDto, AnalysisMode } from "../../../types";
+import type { TextAnalysisDto, AnalysisLanguage, AnalysisMode } from "../../../types";
+import { DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
 
 export const correctTextMock: TextAnalysisDto = {
   is_correct: true,
@@ -61,29 +62,118 @@ export const naturalColloquialTextMock: TextAnalysisDto = {
   translation: "Hej, co słychać? Chcesz napić się kawy?",
 };
 
-export function getMockAnalysis(text: string, mode: AnalysisMode): TextAnalysisDto {
+export const polishGrammarErrorMock: TextAnalysisDto = {
+  is_correct: false,
+  gamification_result: "incorrect",
+  original_text: "Ja lubić czytać książki.",
+  corrected_text: "Lubię czytać książki.",
+  explanation: "The verb must be conjugated in the **first-person singular**: _**lubię**_.",
+  translation: "I like reading books.",
+};
+
+export const polishColloquialErrorMock: TextAnalysisDto = {
+  is_correct: false,
+  gamification_result: "incorrect",
+  original_text: "Uprzejmie proszę o udzielenie mi pomocy.",
+  corrected_text: "Możesz mi pomóc?",
+  explanation: "In everyday conversation, the shorter question sounds more **natural and direct**.",
+  translation: "Can you help me?",
+};
+
+const POLISH_EXPLANATIONS: Record<string, string> = {
+  [incorrectTextMock.corrected_text]:
+    "Z _**I**_ użyj formy _**am**_. W trzeciej osobie liczby pojedynczej czasownik przyjmuje formę _**goes**_.",
+  [verbTenseErrorMock.corrected_text]:
+    "W przeczeniu czasu **Present Simple** dla trzeciej osoby liczby pojedynczej użyj _**doesn't**_.",
+  [articleErrorMock.corrected_text]:
+    "Przed samogłoską użyj rodzajnika _**an**_, a przed konkretnym rzeczownikiem rodzajnika _**the**_.",
+  [formalTextMock.corrected_text]:
+    "Krótsze pytanie brzmi bardziej **naturalnie i potocznie** niż formalna konstrukcja z _**request**_.",
+  [unnaturalPhrasingMock.corrected_text]:
+    "Konstrukcja _**head to work**_ brzmi w codziennej rozmowie bardziej **naturalnie i zwięźle**.",
+  [polishGrammarErrorMock.corrected_text]:
+    "Czasownik należy odmienić w **pierwszej osobie liczby pojedynczej**: _**lubię**_.",
+  [polishColloquialErrorMock.corrected_text]:
+    "W codziennej rozmowie krótsze pytanie brzmi bardziej **naturalnie i bezpośrednio**.",
+};
+
+function localizeMockExplanation(result: TextAnalysisDto, locale: AppLocale): TextAnalysisDto {
+  if (result.is_correct || locale === "en") {
+    return result;
+  }
+
+  return {
+    ...result,
+    explanation: POLISH_EXPLANATIONS[result.corrected_text] ?? result.explanation,
+  };
+}
+
+export function getMockAnalysis(
+  text: string,
+  mode: AnalysisMode,
+  language: AnalysisLanguage,
+  explanationLocale: AppLocale = DEFAULT_APP_LOCALE
+): TextAnalysisDto {
   const lowerText = text.toLowerCase().trim();
+
+  if (language === "pl") {
+    if (mode === "grammar_and_spelling" && (lowerText.includes("ja lubić") || lowerText.includes("on lubić"))) {
+      return localizeMockExplanation(
+        {
+          ...polishGrammarErrorMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
+    }
+
+    if (mode === "colloquial_speech" && lowerText.includes("uprzejmie proszę o udzielenie")) {
+      return localizeMockExplanation(
+        {
+          ...polishColloquialErrorMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
+    }
+
+    return {
+      is_correct: true,
+      gamification_result: "correct",
+      original_text: text,
+      translation: null,
+    };
+  }
 
   if (mode === "grammar_and_spelling") {
     if (lowerText.includes("i is") || lowerText.includes("he go")) {
-      return {
-        ...incorrectTextMock,
-        original_text: text,
-      };
+      return localizeMockExplanation(
+        {
+          ...incorrectTextMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
     }
 
     if (lowerText.includes("don't") && (lowerText.includes("she") || lowerText.includes("he"))) {
-      return {
-        ...verbTenseErrorMock,
-        original_text: text,
-      };
+      return localizeMockExplanation(
+        {
+          ...verbTenseErrorMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
     }
 
     if (lowerText.includes("a apple") || lowerText.includes("on table")) {
-      return {
-        ...articleErrorMock,
-        original_text: text,
-      };
+      return localizeMockExplanation(
+        {
+          ...articleErrorMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
     }
 
     return {
@@ -96,17 +186,23 @@ export function getMockAnalysis(text: string, mode: AnalysisMode): TextAnalysisD
 
   if (mode === "colloquial_speech") {
     if (lowerText.includes("request that you provide assistance")) {
-      return {
-        ...formalTextMock,
-        original_text: text,
-      };
+      return localizeMockExplanation(
+        {
+          ...formalTextMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
     }
 
     if (lowerText.includes("proceed to the location")) {
-      return {
-        ...unnaturalPhrasingMock,
-        original_text: text,
-      };
+      return localizeMockExplanation(
+        {
+          ...unnaturalPhrasingMock,
+          original_text: text,
+        },
+        explanationLocale
+      );
     }
 
     if (lowerText.includes("what's up") || lowerText.includes("grab some coffee")) {

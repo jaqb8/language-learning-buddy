@@ -27,7 +27,7 @@ describe("AnalysisCacheService", () => {
     };
     const service = new AnalysisCacheService(mockSupabase as never);
 
-    const result = await service.get("  Test text  ", "grammar_and_spelling");
+    const result = await service.get("  Test text  ", "grammar_and_spelling", "en", "en");
     const textHash = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText(
       "Test text"
     );
@@ -36,7 +36,8 @@ describe("AnalysisCacheService", () => {
     expect(result).toEqual(cachedResult);
     expect(mockSupabase.rpc).toHaveBeenCalledWith("get_cached_analysis", {
       p_text_hash: textHash as string,
-      p_mode: "grammar_and_spelling:v2",
+      p_mode: "grammar_and_spelling:v5:explanation-en",
+      p_language: "en",
     });
   });
 
@@ -46,9 +47,52 @@ describe("AnalysisCacheService", () => {
     };
     const service = new AnalysisCacheService(mockSupabase as never);
 
-    const result = await service.get("Missing", "grammar_and_spelling");
+    const result = await service.get("Missing", "grammar_and_spelling", "pl", "en");
 
     expect(result).toBeNull();
+    expect(mockSupabase.rpc).toHaveBeenCalledWith("get_cached_analysis", expect.objectContaining({ p_language: "pl" }));
+  });
+
+  it("should keep cache lookups for the same text separate by language", async () => {
+    const mockSupabase = {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const service = new AnalysisCacheService(mockSupabase as never);
+
+    await service.get("Ten sam tekst", "grammar_and_spelling", "en", "en");
+    await service.get("Ten sam tekst", "grammar_and_spelling", "pl", "en");
+
+    expect(mockSupabase.rpc).toHaveBeenNthCalledWith(
+      1,
+      "get_cached_analysis",
+      expect.objectContaining({ p_language: "en" })
+    );
+    expect(mockSupabase.rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_cached_analysis",
+      expect.objectContaining({ p_language: "pl" })
+    );
+  });
+
+  it("should keep cache lookups separate by explanation locale", async () => {
+    const mockSupabase = {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const service = new AnalysisCacheService(mockSupabase as never);
+
+    await service.get("Same text", "grammar_and_spelling", "en", "en");
+    await service.get("Same text", "grammar_and_spelling", "en", "pl");
+
+    expect(mockSupabase.rpc).toHaveBeenNthCalledWith(
+      1,
+      "get_cached_analysis",
+      expect.objectContaining({ p_mode: "grammar_and_spelling:v5:explanation-en" })
+    );
+    expect(mockSupabase.rpc).toHaveBeenNthCalledWith(
+      2,
+      "get_cached_analysis",
+      expect.objectContaining({ p_mode: "grammar_and_spelling:v5:explanation-pl" })
+    );
   });
 
   it("should store result in cache", async () => {
@@ -65,7 +109,7 @@ describe("AnalysisCacheService", () => {
       translation: null,
     };
 
-    await service.set("  I are student  ", "grammar_and_spelling", result);
+    await service.set("  I are student  ", "grammar_and_spelling", "en", "en", result);
     const textHash = await (service as unknown as { hashText: (text: string) => Promise<string | null> }).hashText(
       "I are student"
     );
@@ -73,7 +117,8 @@ describe("AnalysisCacheService", () => {
     expect(textHash).not.toBeNull();
     expect(mockSupabase.rpc).toHaveBeenCalledWith("set_cached_analysis", {
       p_text_hash: textHash as string,
-      p_mode: "grammar_and_spelling:v2",
+      p_mode: "grammar_and_spelling:v5:explanation-en",
+      p_language: "en",
       p_original_text: "I are student",
       p_result: result,
     });

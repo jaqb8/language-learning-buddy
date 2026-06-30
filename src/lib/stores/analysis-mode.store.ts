@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ANALYSIS_MODES, type AnalysisMode } from "@/types";
+import { normalizeAnalysisMode } from "@/lib/analysis-mode.constants";
 
 interface AnalysisModeStore {
   mode: AnalysisMode;
@@ -15,6 +16,11 @@ export const useAnalysisModeStore = create<AnalysisModeStore>()(
     }),
     {
       name: "analysis_mode",
+      version: 1,
+      migrate: (persistedState) => {
+        const state = persistedState as Partial<AnalysisModeStore>;
+        return { mode: normalizeAnalysisMode(state.mode) } as AnalysisModeStore;
+      },
     }
   )
 );

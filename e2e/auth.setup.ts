@@ -9,6 +9,16 @@ setup("authenticate", async ({ page }) => {
 
   const loginPage = new LoginPage(page);
 
+  await page.context().addCookies([
+    {
+      name: "app_locale",
+      value: "pl",
+      domain: "localhost",
+      path: "/",
+      sameSite: "Lax",
+    },
+  ]);
+
   await loginPage.goto();
   await loginPage.login(testEmail, testPassword);
   await loginPage.waitForRedirect();

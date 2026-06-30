@@ -6,24 +6,25 @@ import type {
   PaginationViewModel,
   ApiErrorResponse,
 } from "@/types";
+import { useI18n, type Translator } from "@/lib/i18n";
 
 const PAGE_SIZE = 10;
 
-function mapErrorCodeToMessage(errorCode: string): string {
+function mapErrorCodeToMessage(errorCode: string, t: Translator): string {
   const errorMessages: Record<string, string> = {
-    validation_error_page_invalid: "Nieprawidłowy numer strony.",
-    validation_error_page_size_too_small: "Rozmiar strony musi wynosić co najmniej 1.",
-    validation_error_page_size_too_large: "Rozmiar strony nie może przekraczać 100.",
-    validation_error_id_required: "ID elementu jest wymagane.",
-    validation_error_invalid_uuid: "Nieprawidłowy format ID elementu.",
-    authentication_error_unauthorized: "Musisz być zalogowany, aby wykonać tę operację.",
-    database_error: "Wystąpił błąd serwera. Spróbuj ponownie za chwilę.",
-    not_found: "Element nie został znaleziony.",
-    forbidden: "Nie masz uprawnień do wykonania tej operacji.",
-    unknown_error: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+    validation_error_page_invalid: t("error.invalidPage"),
+    validation_error_page_size_too_small: t("error.pageSizeSmall"),
+    validation_error_page_size_too_large: t("error.pageSizeLarge"),
+    validation_error_id_required: t("error.idRequired"),
+    validation_error_invalid_uuid: t("error.invalidId"),
+    authentication_error_unauthorized: t("error.unauthorized"),
+    database_error: t("error.server"),
+    not_found: t("error.notFound"),
+    forbidden: t("error.forbidden"),
+    unknown_error: t("error.unexpected"),
   };
 
-  return errorMessages[errorCode] || "Wystąpił nieoczekiwany błąd.";
+  return errorMessages[errorCode] || t("error.unexpectedShort");
 }
 
 interface UseLearningItemsOptions {
@@ -91,19 +92,19 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, intlLocale: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("pl-PL", {
+  return date.toLocaleDateString(intlLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
 
-function mapToViewModel(item: LearningItemDto): LearningItemViewModel {
+function mapToViewModel(item: LearningItemDto, intlLocale: string): LearningItemViewModel {
   return {
     ...item,
-    formatted_created_at: formatDate(item.created_at),
+    formatted_created_at: formatDate(item.created_at, intlLocale),
   };
 }
 
@@ -118,6 +119,7 @@ function mapToPaginationViewModel(
 }
 
 export function useLearningItems(options: UseLearningItemsOptions = {}): UseLearningItemsReturn {
+  const { t, intlLocale } = useI18n();
   const { initialData = null } = options;
 
   const hasInitialData = initialData !== null;
@@ -134,29 +136,32 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
   const abortControllerRef = useRef<AbortController | null>(null);
   const hasUsedInitialDataRef = useRef(false);
 
-  const fetchItems = useCallback(async (currentPage: number, signal?: AbortSignal) => {
-    dispatch({ type: "FETCH_PAGE_REQUEST" });
+  const fetchItems = useCallback(
+    async (currentPage: number, signal?: AbortSignal) => {
+      dispatch({ type: "FETCH_PAGE_REQUEST" });
 
-    try {
-      const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`, { signal });
+      try {
+        const response = await fetch(`/api/learning-items?page=${currentPage}&pageSize=${PAGE_SIZE}`, { signal });
 
-      if (!response.ok) {
-        const errorData: ApiErrorResponse = await response.json();
-        const errorMessage = mapErrorCodeToMessage(errorData.error_code);
-        dispatch({ type: "FETCH_PAGE_ERROR", error: errorMessage });
-        return;
+        if (!response.ok) {
+          const errorData: ApiErrorResponse = await response.json();
+          const errorMessage = mapErrorCodeToMessage(errorData.error_code, t);
+          dispatch({ type: "FETCH_PAGE_ERROR", error: errorMessage });
+          return;
+        }
+
+        const result: PaginatedResponseDto<LearningItemDto> = await response.json();
+        dispatch({ type: "FETCH_PAGE_SUCCESS", data: result });
+      } catch (err) {
+        if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
+          return;
+        }
+        console.error("Network error during fetch:", err);
+        dispatch({ type: "FETCH_PAGE_ERROR", error: t("error.genericRetry") });
       }
-
-      const result: PaginatedResponseDto<LearningItemDto> = await response.json();
-      dispatch({ type: "FETCH_PAGE_SUCCESS", data: result });
-    } catch (err) {
-      if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
-        return;
-      }
-      console.error("Network error during fetch:", err);
-      dispatch({ type: "FETCH_PAGE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
-    }
-  }, []);
+    },
+    [t]
+  );
 
   useEffect(() => {
     // Skip only the very first fetch on page 1 if we have initial data from SSR
@@ -196,7 +201,7 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
 
       if (!response.ok) {
         const errorData: ApiErrorResponse = await response.json();
-        const errorMessage = mapErrorCodeToMessage(errorData.error_code);
+        const errorMessage = mapErrorCodeToMessage(errorData.error_code, t);
         dispatch({ type: "DELETE_ERROR", error: errorMessage });
         return;
       }
@@ -209,15 +214,18 @@ export function useLearningItems(options: UseLearningItemsOptions = {}): UseLear
       await fetchItems(state.page, controller.signal);
     } catch (err) {
       console.error("Network error during delete:", err);
-      dispatch({ type: "DELETE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
+      dispatch({ type: "DELETE_ERROR", error: t("error.genericRetry") });
     }
-  }, [state.itemToDelete, state.page, fetchItems]);
+  }, [state.itemToDelete, state.page, fetchItems, t]);
 
   const cancelDelete = useCallback(() => {
     dispatch({ type: "CLOSE_DELETE_DIALOG" });
   }, []);
 
-  const viewModels = useMemo(() => state.data?.data.map(mapToViewModel) ?? [], [state.data]);
+  const viewModels = useMemo(
+    () => state.data?.data.map((item) => mapToViewModel(item, intlLocale)) ?? [],
+    [state.data, intlLocale]
+  );
   const paginationViewModel = useMemo(
     () => (state.data?.pagination ? mapToPaginationViewModel(state.data.pagination) : null),
     [state.data]

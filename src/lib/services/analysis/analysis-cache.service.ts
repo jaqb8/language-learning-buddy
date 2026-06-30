@@ -1,12 +1,18 @@
 import type { SupabaseClient } from "../../../db/supabase.client";
-import type { AnalysisMode, TextAnalysisDto } from "../../../types";
+import type { AnalysisLanguage, AnalysisMode, TextAnalysisDto } from "../../../types";
+import type { AppLocale } from "@/lib/i18n";
 
-const ANALYSIS_CACHE_VERSION = "v2";
+const ANALYSIS_CACHE_VERSION = "v5";
 
 export class AnalysisCacheService {
   constructor(private readonly supabase: SupabaseClient) {}
 
-  async get(text: string, mode: AnalysisMode): Promise<TextAnalysisDto | null> {
+  async get(
+    text: string,
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    explanationLocale: AppLocale
+  ): Promise<TextAnalysisDto | null> {
     let textHash: string | null = null;
     try {
       textHash = await this.hashText(text);
@@ -21,7 +27,8 @@ export class AnalysisCacheService {
 
     const { data, error } = await this.supabase.rpc("get_cached_analysis", {
       p_text_hash: textHash,
-      p_mode: this.getVersionedMode(mode),
+      p_mode: this.getVersionedMode(mode, explanationLocale),
+      p_language: language,
     });
 
     if (error) {
@@ -36,7 +43,13 @@ export class AnalysisCacheService {
     return data as TextAnalysisDto;
   }
 
-  async set(text: string, mode: AnalysisMode, result: TextAnalysisDto): Promise<void> {
+  async set(
+    text: string,
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    explanationLocale: AppLocale,
+    result: TextAnalysisDto
+  ): Promise<void> {
     let textHash: string | null = null;
     try {
       textHash = await this.hashText(text);
@@ -52,7 +65,8 @@ export class AnalysisCacheService {
     const normalizedText = text.trim();
     const { error } = await this.supabase.rpc("set_cached_analysis", {
       p_text_hash: textHash,
-      p_mode: this.getVersionedMode(mode),
+      p_mode: this.getVersionedMode(mode, explanationLocale),
+      p_language: language,
       p_original_text: normalizedText,
       p_result: result,
     });
@@ -76,8 +90,8 @@ export class AnalysisCacheService {
     return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
   }
 
-  private getVersionedMode(mode: AnalysisMode): string {
-    return `${mode}:${ANALYSIS_CACHE_VERSION}`;
+  private getVersionedMode(mode: AnalysisMode, explanationLocale: AppLocale): string {
+    return `${mode}:${ANALYSIS_CACHE_VERSION}:explanation-${explanationLocale}`;
   }
 
   private async getWebCrypto(): Promise<Crypto | null> {
