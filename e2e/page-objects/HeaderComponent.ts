@@ -20,8 +20,8 @@ export class HeaderComponent {
   constructor(page: Page) {
     this.page = page;
     this.logo = page.getByRole("link", { name: /language learning buddy/i });
-    this.analyzeLink = page.getByRole("link", { name: /^analiza$/i });
-    this.learningListLink = page.getByRole("link", { name: /moja lista/i });
+    this.analyzeLink = page.getByRole("link", { name: /^(analiza|analyse)$/i });
+    this.learningListLink = page.getByRole("link", { name: /(moja lista|my list)/i });
     this.loginButton = page.getByTestId("header-login-button");
     this.signupButton = page.getByTestId("header-signup-button");
     this.logoutButton = page.getByTestId("header-logout-button");

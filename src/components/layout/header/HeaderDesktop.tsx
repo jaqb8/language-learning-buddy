@@ -19,6 +19,9 @@ import {
 import { GamificationBadge } from "@/components/features/gamification/GamificationBadge";
 import { ModeToggle } from "@/components/shared/ModeToggle";
 import { UserMenuThemeToggle } from "@/components/shared/UserMenuThemeToggle";
+import { LanguageSelector } from "@/components/shared/LanguageSelector";
+import { UserMenuLanguageSelector } from "@/components/shared/UserMenuLanguageSelector";
+import { useI18n } from "@/lib/i18n";
 import type { HeaderVM } from "./header.model";
 
 interface MenuItem {
@@ -35,6 +38,8 @@ const getInitials = (email: string): string => {
 };
 
 export function HeaderDesktop({ vm }: { vm: HeaderVM }) {
+  const { locale, t } = useI18n();
+
   return (
     <nav className="hidden justify-between lg:flex container mx-auto items-center">
       <div className="flex items-center gap-6">
@@ -88,11 +93,13 @@ export function HeaderDesktop({ vm }: { vm: HeaderVM }) {
                 <DropdownMenuItem asChild>
                   <a href="/settings" className="cursor-pointer" data-test-id="header-settings-button">
                     <Settings className="size-4" />
-                    <span>Ustawienia</span>
+                    <span>{t("header.settings")}</span>
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <UserMenuLanguageSelector />
                 <UserMenuThemeToggle />
+                <DropdownMenuSeparator />
                 <form action="/api/auth/logout" method="POST">
                   <DropdownMenuItem
                     asChild
@@ -102,7 +109,7 @@ export function HeaderDesktop({ vm }: { vm: HeaderVM }) {
                   >
                     <button type="submit" className="w-full flex items-center gap-2">
                       <LogOut className="size-4" />
-                      <span>Wyloguj</span>
+                      <span>{t("header.logout")}</span>
                     </button>
                   </DropdownMenuItem>
                 </form>
@@ -111,20 +118,26 @@ export function HeaderDesktop({ vm }: { vm: HeaderVM }) {
           </>
         )}
 
-        {vm.showModeToggleDesktop ? <ModeToggle /> : null}
+        {vm.showModeToggleDesktop ? (
+          <>
+            <LanguageSelector locale={locale} />
+            <ModeToggle />
+          </>
+        ) : null}
       </div>
     </nav>
   );
 }
 
 function DesktopAuthButtons() {
+  const { t } = useI18n();
   return (
     <>
       <Button asChild variant="outline" size="sm" data-test-id="header-login-button">
-        <a href="/login">Zaloguj</a>
+        <a href="/login">{t("header.login")}</a>
       </Button>
       <Button asChild size="sm" data-test-id="header-signup-button">
-        <a href="/signup">Zarejestruj</a>
+        <a href="/signup">{t("header.signup")}</a>
       </Button>
     </>
   );

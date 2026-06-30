@@ -1,4 +1,5 @@
-import type { AIProvider, AnalysisMode, TextAnalysisDto } from "../../../types";
+import type { AIProvider, AnalysisLanguage, AnalysisMode, TextAnalysisDto } from "../../../types";
+import { DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
 import type { OpenRouterService } from "./openrouter.service";
 import {
   OpenRouterConfigurationError,
@@ -21,9 +22,17 @@ import {
 export class OpenRouterAIProvider implements AIProvider {
   constructor(private readonly service: OpenRouterService) {}
 
-  async analyzeText(mode: AnalysisMode, text: string, context?: string): Promise<TextAnalysisDto> {
+  async analyzeText(
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    text: string,
+    context?: string,
+    explanationLocale?: AppLocale
+  ): Promise<TextAnalysisDto> {
     try {
-      return await this.service.analyzeText(mode, text, context);
+      return explanationLocale && explanationLocale !== DEFAULT_APP_LOCALE
+        ? await this.service.analyzeText(mode, language, text, context, explanationLocale)
+        : await this.service.analyzeText(mode, language, text, context);
     } catch (error) {
       throw this.mapError(error);
     }

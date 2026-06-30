@@ -46,25 +46,33 @@ describe("OpenRouterAIProvider", () => {
   it("should delegate analyzeText to OpenRouterService", async () => {
     mockService.analyzeText.mockResolvedValue(mockResponse);
 
-    const result = await provider.analyzeText("grammar_and_spelling", "Hello world", "some context");
+    const result = await provider.analyzeText("grammar_and_spelling", "en", "Hello world", "some context");
 
-    expect(mockService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world", "some context");
+    expect(mockService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "en", "Hello world", "some context");
     expect(result).toEqual(mockResponse);
   });
 
   it("should pass undefined context when not provided", async () => {
     mockService.analyzeText.mockResolvedValue(mockResponse);
 
-    await provider.analyzeText("grammar_and_spelling", "Hello world");
+    await provider.analyzeText("grammar_and_spelling", "en", "Hello world");
 
-    expect(mockService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world", undefined);
+    expect(mockService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "en", "Hello world", undefined);
+  });
+
+  it("should forward a non-default explanation locale", async () => {
+    mockService.analyzeText.mockResolvedValue(mockResponse);
+
+    await provider.analyzeText("grammar_and_spelling", "en", "Hello world", undefined, "pl");
+
+    expect(mockService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "en", "Hello world", undefined, "pl");
   });
 
   describe("error mapping", () => {
     it("should map OpenRouterConfigurationError to AnalysisConfigurationError", async () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterConfigurationError());
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
         AnalysisConfigurationError
       );
     });
@@ -72,7 +80,7 @@ describe("OpenRouterAIProvider", () => {
     it("should map OpenRouterAuthenticationError to AnalysisAuthenticationError", async () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterAuthenticationError());
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
         AnalysisAuthenticationError
       );
     });
@@ -80,7 +88,7 @@ describe("OpenRouterAIProvider", () => {
     it("should map OpenRouterRateLimitError to AnalysisRateLimitError", async () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterRateLimitError());
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
         AnalysisRateLimitError
       );
     });
@@ -88,7 +96,7 @@ describe("OpenRouterAIProvider", () => {
     it("should map OpenRouterInvalidRequestError to AnalysisInvalidRequestError", async () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterInvalidRequestError());
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
         AnalysisInvalidRequestError
       );
     });
@@ -97,7 +105,7 @@ describe("OpenRouterAIProvider", () => {
       const validationErrors = [{ message: "invalid field" }];
       mockService.analyzeText.mockRejectedValue(new OpenRouterResponseValidationError(validationErrors));
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
         AnalysisValidationError
       );
     });
@@ -107,7 +115,7 @@ describe("OpenRouterAIProvider", () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterResponseValidationError(validationErrors));
 
       try {
-        await provider.analyzeText("grammar_and_spelling", "text");
+        await provider.analyzeText("grammar_and_spelling", "en", "text");
       } catch (error) {
         expect(error).toBeInstanceOf(AnalysisValidationError);
         expect((error as AnalysisValidationError).validationErrors).toEqual(validationErrors);
@@ -118,7 +126,9 @@ describe("OpenRouterAIProvider", () => {
       const cause = new Error("connection refused");
       mockService.analyzeText.mockRejectedValue(new OpenRouterNetworkError(cause));
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(AnalysisNetworkError);
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
+        AnalysisNetworkError
+      );
     });
 
     it("should preserve cause when mapping OpenRouterNetworkError", async () => {
@@ -126,7 +136,7 @@ describe("OpenRouterAIProvider", () => {
       mockService.analyzeText.mockRejectedValue(new OpenRouterNetworkError(cause));
 
       try {
-        await provider.analyzeText("grammar_and_spelling", "text");
+        await provider.analyzeText("grammar_and_spelling", "en", "text");
       } catch (error) {
         expect(error).toBeInstanceOf(AnalysisNetworkError);
         expect((error as AnalysisNetworkError).cause).toBe(cause);
@@ -136,7 +146,9 @@ describe("OpenRouterAIProvider", () => {
     it("should map unknown errors to AnalysisUnknownError", async () => {
       mockService.analyzeText.mockRejectedValue(new Error("something unexpected"));
 
-      await expect(provider.analyzeText("grammar_and_spelling", "text")).rejects.toBeInstanceOf(AnalysisUnknownError);
+      await expect(provider.analyzeText("grammar_and_spelling", "en", "text")).rejects.toBeInstanceOf(
+        AnalysisUnknownError
+      );
     });
   });
 });

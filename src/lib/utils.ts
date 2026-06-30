@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getIntlLocale, type AppLocale } from "@/lib/i18n";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,26 +40,27 @@ export function getClientIP(request: Request): string {
  * @param resetAt - ISO timestamp string (UTC)
  * @returns Formatted string like "26 listopada 2025 o 00:00 UTC" or "wkrótce" on error
  */
-export function formatResetTime(resetAt: string): string {
+export function formatResetTime(resetAt: string, locale: AppLocale = "en"): string {
   try {
     const resetDate = new Date(resetAt);
 
-    const dateString = resetDate.toLocaleDateString("pl-PL", {
+    const intlLocale = getIntlLocale(locale);
+    const dateString = resetDate.toLocaleDateString(intlLocale, {
       day: "numeric",
       month: "long",
       year: "numeric",
       timeZone: "UTC",
     });
 
-    const timeString = resetDate.toLocaleTimeString("pl-PL", {
+    const timeString = resetDate.toLocaleTimeString(intlLocale, {
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "UTC",
     });
 
-    return `${dateString} o ${timeString} UTC`;
+    return locale === "pl" ? `${dateString} o ${timeString} UTC` : `${dateString} at ${timeString} UTC`;
   } catch {
-    return "wkrótce";
+    return locale === "pl" ? "wkrótce" : "soon";
   }
 }
 

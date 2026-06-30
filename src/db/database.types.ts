@@ -27,6 +27,7 @@ export interface Database {
     Tables: {
       analysis_cache: {
         Row: {
+          analysis_language: string;
           analysis_mode: string;
           created_at: string;
           hit_count: number;
@@ -37,6 +38,7 @@ export interface Database {
           text_hash: string;
         };
         Insert: {
+          analysis_language?: string;
           analysis_mode: string;
           created_at?: string;
           hit_count?: number;
@@ -47,6 +49,7 @@ export interface Database {
           text_hash: string;
         };
         Update: {
+          analysis_language?: string;
           analysis_mode?: string;
           created_at?: string;
           hit_count?: number;
@@ -81,6 +84,7 @@ export interface Database {
       };
       learning_items: {
         Row: {
+          analysis_language: string;
           analysis_mode: string;
           corrected_sentence: string;
           created_at: string;
@@ -91,6 +95,7 @@ export interface Database {
           user_id: string;
         };
         Insert: {
+          analysis_language?: string;
           analysis_mode?: string;
           corrected_sentence: string;
           created_at?: string;
@@ -101,6 +106,7 @@ export interface Database {
           user_id: string;
         };
         Update: {
+          analysis_language?: string;
           analysis_mode?: string;
           corrected_sentence?: string;
           created_at?: string;
@@ -135,21 +141,18 @@ export interface Database {
       };
       user_settings: {
         Row: {
-          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
           updated_at: string;
           user_id: string;
         };
         Insert: {
-          beta_modes_enabled?: boolean;
           context_enabled?: boolean;
           points_enabled?: boolean;
           updated_at?: string;
           user_id: string;
         };
         Update: {
-          beta_modes_enabled?: boolean;
           context_enabled?: boolean;
           points_enabled?: boolean;
           updated_at?: string;
@@ -168,7 +171,10 @@ export interface Database {
           total_analyses: number;
         }[];
       };
-      get_cached_analysis: { Args: { p_text_hash: string; p_mode: string }; Returns: Json };
+      get_cached_analysis: {
+        Args: { p_language: string; p_mode: string; p_text_hash: string };
+        Returns: Json;
+      };
       get_anonymous_quota_status: {
         Args: { p_ip_hash: string; p_usage_date: string };
         Returns: number;
@@ -176,7 +182,6 @@ export interface Database {
       get_user_settings: {
         Args: never;
         Returns: {
-          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
         }[];
@@ -194,13 +199,18 @@ export interface Database {
       };
       reset_analysis_stats: { Args: never; Returns: undefined };
       set_cached_analysis: {
-        Args: { p_text_hash: string; p_mode: string; p_original_text: string; p_result: Json };
+        Args: {
+          p_language: string;
+          p_mode: string;
+          p_original_text: string;
+          p_result: Json;
+          p_text_hash: string;
+        };
         Returns: undefined;
       };
       upsert_user_settings: {
-        Args: { p_beta_modes_enabled?: boolean; p_context_enabled?: boolean; p_points_enabled?: boolean };
+        Args: { p_context_enabled?: boolean; p_points_enabled?: boolean };
         Returns: {
-          beta_modes_enabled: boolean;
           context_enabled: boolean;
           points_enabled: boolean;
         }[];

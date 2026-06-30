@@ -12,7 +12,7 @@ export class AnalyzePage {
     this.page = page;
     this.form = new AnalysisFormComponent(page);
     this.result = new AnalysisResultComponent(page);
-    this.heading = page.getByRole("heading", { name: /analiza tekstu/i });
+    this.heading = page.getByRole("heading", { name: /(analiza tekstu|text analysis)/i });
   }
 
   async goto() {

@@ -1,13 +1,16 @@
 import { SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { LEVEL_CONFIGS, type GamificationBadgeVM } from "./gamificationBadge.model";
+import { getLevelConfigs, type GamificationBadgeVM } from "./gamificationBadge.model";
+import { useI18n } from "@/lib/i18n";
 
 interface GamificationBadgeSheetProps {
   vm: GamificationBadgeVM;
 }
 
 export function GamificationBadgeSheet({ vm }: GamificationBadgeSheetProps) {
+  const { t } = useI18n();
   const { Icon } = vm.config;
+  const levelConfigs = getLevelConfigs(t);
 
   return (
     <SheetContent>
@@ -33,30 +36,26 @@ export function GamificationBadgeSheet({ vm }: GamificationBadgeSheetProps) {
       <div className="space-y-4 px-4">
         <div className="flex items-center justify-between rounded-lg border p-4">
           <div>
-            <p className="text-sm text-muted-foreground">Twój wynik</p>
+            <p className="text-sm text-muted-foreground">{t("gamification.yourScore")}</p>
             <p className={cn("text-3xl font-bold", vm.config.textClass)}>{vm.percentage}%</p>
           </div>
           {vm.hasAnalyses && (
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Poprawne analizy</p>
+              <p className="text-sm text-muted-foreground">{t("gamification.correctAnalyses")}</p>
               <p className="text-lg font-semibold">
-                {vm.correctAnalyses} z {vm.totalAnalyses}
+                {t("gamification.of", { correct: vm.correctAnalyses, total: vm.totalAnalyses })}
               </p>
             </div>
           )}
         </div>
 
-        {!vm.hasAnalyses && (
-          <p className="text-sm text-muted-foreground text-center">
-            Przeprowadź pierwszą analizę, aby zobaczyć swoje statystyki!
-          </p>
-        )}
+        {!vm.hasAnalyses && <p className="text-sm text-muted-foreground text-center">{t("gamification.first")}</p>}
 
         <div className="space-y-2">
-          <p className="text-sm font-medium">Wszystkie poziomy:</p>
+          <p className="text-sm font-medium">{t("gamification.allLevels")}</p>
           <div className="grid gap-2">
-            {Object.entries(LEVEL_CONFIGS).map(([key, levelConfig]) => {
-              const isCurrentLevel = vm.config === levelConfig;
+            {Object.entries(levelConfigs).map(([key, levelConfig]) => {
+              const isCurrentLevel = vm.levelKey === key;
               return (
                 <div
                   key={key}

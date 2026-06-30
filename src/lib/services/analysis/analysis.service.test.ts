@@ -34,10 +34,10 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText(text, mode);
+    await service.analyzeText(text, mode, "en");
 
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
-    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, "en", text, undefined, "en");
   });
 
   it("should pass context to aiProvider.analyzeText when provided", async () => {
@@ -47,10 +47,10 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText(text, mode, analysisContext);
+    await service.analyzeText(text, mode, "en", analysisContext);
 
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
-    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, text, analysisContext);
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, "en", text, analysisContext, "en");
   });
 
   it("should pass undefined context when analysisContext is empty string", async () => {
@@ -60,10 +60,10 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText(text, mode, analysisContext);
+    await service.analyzeText(text, mode, "en", analysisContext);
 
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
-    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, "en", text, undefined, "en");
   });
 
   it("should pass undefined context when analysisContext is only whitespace", async () => {
@@ -73,10 +73,10 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText(text, mode, analysisContext);
+    await service.analyzeText(text, mode, "en", analysisContext);
 
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
-    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, text, undefined);
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, "en", text, undefined, "en");
   });
 
   it("should work with colloquial_speech mode", async () => {
@@ -86,10 +86,24 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText(text, mode, analysisContext);
+    await service.analyzeText(text, mode, "en", analysisContext);
 
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
-    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, text, analysisContext);
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(mode, "en", text, analysisContext, "en");
+  });
+
+  it("should pass the application locale as the explanation language", async () => {
+    mockProvider.analyzeText.mockResolvedValue(mockResponse);
+
+    await service.analyzeText("I am a student.", "grammar_and_spelling", "en", undefined, "pl");
+
+    expect(mockProvider.analyzeText).toHaveBeenCalledWith(
+      "grammar_and_spelling",
+      "en",
+      "I am a student.",
+      undefined,
+      "pl"
+    );
   });
 
   it("should propagate errors from aiProvider", async () => {
@@ -99,7 +113,7 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockRejectedValue(error);
 
-    await expect(service.analyzeText(text, mode)).rejects.toThrow("provider error");
+    await expect(service.analyzeText(text, mode, "en")).rejects.toThrow("provider error");
   });
 
   it("should normalize an incorrect result when corrected text is unchanged", async () => {
@@ -114,7 +128,7 @@ describe("AnalysisService", () => {
 
     mockProvider.analyzeText.mockResolvedValue(unchangedCorrection);
 
-    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling");
+    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling", "en");
 
     expect(result).toEqual({
       is_correct: true,
@@ -147,7 +161,7 @@ describe("AnalysisService - cache integration", () => {
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
-    await service.analyzeText("I am a student.", "grammar_and_spelling", "Piszę email do mojego szefa");
+    await service.analyzeText("I am a student.", "grammar_and_spelling", "en", "Piszę email do mojego szefa");
 
     expect(mockSupabase.rpc).not.toHaveBeenCalled();
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
@@ -167,7 +181,7 @@ describe("AnalysisService - cache integration", () => {
     };
     const service = new AnalysisService(mockProvider, mockSupabase as never);
 
-    const result = await service.analyzeText("I are student", "grammar_and_spelling");
+    const result = await service.analyzeText("I are student", "grammar_and_spelling", "en");
 
     expect(result).toEqual(cachedResult);
     expect(mockProvider.analyzeText).not.toHaveBeenCalled();
@@ -187,7 +201,7 @@ describe("AnalysisService - cache integration", () => {
     };
     const service = new AnalysisService(mockProvider, mockSupabase as never);
 
-    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling");
+    const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling", "en");
 
     expect(result).toEqual({
       is_correct: true,

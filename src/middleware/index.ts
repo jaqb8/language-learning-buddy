@@ -6,12 +6,15 @@ import { DailyQuotaService } from "../lib/services/daily-quota";
 import { createErrorResponse } from "@/lib/api-helpers.ts";
 import { getClientIP } from "@/lib/utils.ts";
 import { ANONYMOUS_DAILY_QUOTA } from "astro:env/server";
+import { APP_LOCALE_COOKIE, normalizeAppLocale } from "@/lib/i18n";
 
 const AUTH_PAGES = ["/login", "/signup", "/forgot-password"];
 
 const PRIVATE_PATHS = ["/learning-list"];
 
 export const onRequest = defineMiddleware(async ({ locals, cookies, url, request, redirect }, next) => {
+  locals.locale = normalizeAppLocale(cookies.get(APP_LOCALE_COOKIE)?.value);
+
   const supabase = createSupabaseServerInstance({
     cookies,
     headers: request.headers,

@@ -1,4 +1,5 @@
 import { ChevronUp, ChevronsUp, Rocket, Crown } from "lucide-react";
+import { createTranslator, type Translator } from "@/lib/i18n";
 
 export interface LevelConfig {
   name: string;
@@ -11,10 +12,8 @@ export interface LevelConfig {
   Icon: typeof ChevronUp;
 }
 
-export const LEVEL_CONFIGS: Record<string, LevelConfig> = {
+const LEVEL_STYLES: Record<string, Omit<LevelConfig, "name" | "description">> = {
   beginner: {
-    name: "Początkujący",
-    description: "Dopiero zaczynasz swoją przygodę z językiem. Każdy błąd to okazja do nauki!",
     range: "0% – 39%",
     bgClass: "bg-slate-100 dark:bg-slate-800/50",
     borderClass: "border-slate-300 dark:border-slate-700",
@@ -23,8 +22,6 @@ export const LEVEL_CONFIGS: Record<string, LevelConfig> = {
     Icon: ChevronUp,
   },
   developing: {
-    name: "Rozwijający się",
-    description: "Robisz postępy! Kontynuuj ćwiczenia, a wkrótce osiągniesz wyższy poziom.",
     range: "40% – 69%",
     bgClass: "bg-amber-50 dark:bg-amber-950/50",
     borderClass: "border-amber-200 dark:border-amber-800",
@@ -33,8 +30,6 @@ export const LEVEL_CONFIGS: Record<string, LevelConfig> = {
     Icon: ChevronsUp,
   },
   advanced: {
-    name: "Zaawansowany",
-    description: "Świetna robota! Twoja znajomość języka jest na wysokim poziomie.",
     range: "70% – 89%",
     bgClass: "bg-green-50 dark:bg-green-950/50",
     borderClass: "border-green-200 dark:border-green-800",
@@ -43,8 +38,6 @@ export const LEVEL_CONFIGS: Record<string, LevelConfig> = {
     Icon: Crown,
   },
   expert: {
-    name: "Ekspert",
-    description: "Mistrzostwo! Piszesz niemal bezbłędnie. Jesteś wzorem do naśladowania!",
     range: "90% – 100%",
     bgClass: "bg-blue-50 dark:bg-blue-950/50",
     borderClass: "border-blue-200 dark:border-blue-800",
@@ -53,6 +46,33 @@ export const LEVEL_CONFIGS: Record<string, LevelConfig> = {
     Icon: Rocket,
   },
 };
+
+export function getLevelConfigs(t: Translator = createTranslator("en")): Record<string, LevelConfig> {
+  return {
+    beginner: {
+      ...LEVEL_STYLES.beginner,
+      name: t("gamification.beginner.name"),
+      description: t("gamification.beginner.description"),
+    },
+    developing: {
+      ...LEVEL_STYLES.developing,
+      name: t("gamification.developing.name"),
+      description: t("gamification.developing.description"),
+    },
+    advanced: {
+      ...LEVEL_STYLES.advanced,
+      name: t("gamification.advanced.name"),
+      description: t("gamification.advanced.description"),
+    },
+    expert: {
+      ...LEVEL_STYLES.expert,
+      name: t("gamification.expert.name"),
+      description: t("gamification.expert.description"),
+    },
+  };
+}
+
+export const LEVEL_CONFIGS = getLevelConfigs();
 
 export function getLevelFromPercentage(percentage: number): string {
   if (percentage >= 90) return "expert";
@@ -76,10 +96,12 @@ export function buildGamificationBadgeVM({
   correctAnalyses,
   totalAnalyses,
   showBeta = false,
+  t = createTranslator("en"),
 }: {
   correctAnalyses?: number;
   totalAnalyses?: number;
   showBeta?: boolean;
+  t?: Translator;
 }): GamificationBadgeVM | null {
   if (correctAnalyses === undefined || totalAnalyses === undefined) {
     return null;
@@ -88,7 +110,7 @@ export function buildGamificationBadgeVM({
   const hasAnalyses = totalAnalyses > 0;
   const percentage = hasAnalyses ? Math.round((correctAnalyses / totalAnalyses) * 100) : 0;
   const levelKey = getLevelFromPercentage(percentage);
-  const config = LEVEL_CONFIGS[levelKey];
+  const config = getLevelConfigs(t)[levelKey];
 
   return {
     percentage,

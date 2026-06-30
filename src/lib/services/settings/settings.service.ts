@@ -17,7 +17,6 @@ export class SettingsService {
     return {
       pointsEnabled: settings?.points_enabled ?? true,
       contextEnabled: settings?.context_enabled ?? true,
-      betaModesEnabled: settings?.beta_modes_enabled ?? false,
     };
   }
 
@@ -25,7 +24,6 @@ export class SettingsService {
     const { data, error } = await this.supabase.rpc("upsert_user_settings", {
       p_points_enabled: settings.pointsEnabled,
       p_context_enabled: settings.contextEnabled,
-      p_beta_modes_enabled: settings.betaModesEnabled,
     });
 
     if (error) {
@@ -37,7 +35,6 @@ export class SettingsService {
     return {
       pointsEnabled: updated?.points_enabled ?? true,
       contextEnabled: updated?.context_enabled ?? true,
-      betaModesEnabled: updated?.beta_modes_enabled ?? false,
     };
   }
 }

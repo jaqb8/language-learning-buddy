@@ -3,8 +3,8 @@ import { z } from "zod";
 import { LearningItemsService, LearningItemsDatabaseError } from "@/lib/services/learning-items";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
 import { isFeatureEnabled } from "@/features/feature-flags.service";
-import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
-import type { AnalysisMode } from "@/types";
+import { isValidAnalysisLanguage, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import type { AnalysisLanguage, AnalysisMode } from "@/types";
 
 export const prerender = false;
 
@@ -41,6 +41,12 @@ const createLearningItemSchema = z.object({
     .default("grammar_and_spelling")
     .refine((val): val is AnalysisMode => isValidAnalysisMode(val), {
       message: "validation_error_invalid_mode",
+    }),
+  analysis_language: z
+    .string()
+    .default("en")
+    .refine((val): val is AnalysisLanguage => isValidAnalysisLanguage(val), {
+      message: "validation_error_invalid_language",
     }),
   translation: z.string().nullable(),
 });

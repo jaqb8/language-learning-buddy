@@ -1,5 +1,6 @@
 import type { Database } from "./db/database.types";
 import type { ZodSchema } from "zod";
+import type { AppLocale } from "./lib/i18n";
 
 // ============================================================================
 // Database Entities
@@ -15,14 +16,15 @@ export type LearningItem = Database["public"]["Tables"]["learning_items"]["Row"]
  * Represents the mode of text analysis.
  * - 'grammar_and_spelling': Analyzes text for grammatical and spelling errors
  * - 'colloquial_speech': Analyzes text for naturalness and colloquial style
- * - 'beta_grammar_and_spelling': Beta version of grammar analysis with optimized prompts
- * - 'beta_colloquial_speech': Beta version of colloquial speech analysis with optimized prompts
  */
-export type AnalysisMode =
-  | "grammar_and_spelling"
-  | "colloquial_speech"
-  | "beta_grammar_and_spelling"
-  | "beta_colloquial_speech";
+export type AnalysisMode = "grammar_and_spelling" | "colloquial_speech";
+
+/**
+ * Language of the text being analyzed.
+ * - 'en': English
+ * - 'pl': Polish
+ */
+export type AnalysisLanguage = "en" | "pl";
 
 // ============================================================================
 // API DTOs (Data Transfer Objects)
@@ -42,7 +44,6 @@ export interface ApiErrorResponse {
 export interface UserSettings {
   pointsEnabled: boolean;
   contextEnabled: boolean;
-  betaModesEnabled: boolean;
 }
 
 /**
@@ -64,7 +65,14 @@ export type AnalysisGamificationResult = "correct" | "minor_issue" | "incorrect"
  */
 export type LearningItemDto = Pick<
   LearningItem,
-  "id" | "original_sentence" | "corrected_sentence" | "explanation" | "analysis_mode" | "translation" | "created_at"
+  | "id"
+  | "original_sentence"
+  | "corrected_sentence"
+  | "explanation"
+  | "analysis_mode"
+  | "analysis_language"
+  | "translation"
+  | "created_at"
 >;
 
 /**
@@ -141,7 +149,7 @@ export type SignedInUserDto = Omit<UserDto, "created_at">;
  */
 export type CreateLearningItemCommand = Pick<
   LearningItem,
-  "original_sentence" | "corrected_sentence" | "explanation" | "analysis_mode" | "translation"
+  "original_sentence" | "corrected_sentence" | "explanation" | "analysis_mode" | "analysis_language" | "translation"
 >;
 
 /**
@@ -153,6 +161,7 @@ export type CreateLearningItemCommand = Pick<
 export interface AnalyzeTextCommand {
   text: string;
   mode?: AnalysisMode;
+  language?: AnalysisLanguage;
 }
 
 /**
@@ -281,8 +290,11 @@ export interface AnalysisModeConfig {
 export const ANALYSIS_MODES = {
   GRAMMAR_AND_SPELLING: "grammar_and_spelling",
   COLLOQUIAL_SPEECH: "colloquial_speech",
-  BETA_GRAMMAR_AND_SPELLING: "beta_grammar_and_spelling",
-  BETA_COLLOQUIAL_SPEECH: "beta_colloquial_speech",
+} as const;
+
+export const ANALYSIS_LANGUAGES = {
+  ENGLISH: "en",
+  POLISH: "pl",
 } as const;
 
 /**
@@ -293,7 +305,14 @@ export interface AnalysisModeDto {
   value: AnalysisMode;
   label: string;
   description: string;
-  isBeta: boolean;
+  testId: string;
+}
+
+export interface AnalysisLanguageDto {
+  value: AnalysisLanguage;
+  label: string;
+  inputLabel: string;
+  placeholder: string;
   testId: string;
 }
 
@@ -302,5 +321,11 @@ export interface AnalysisModeDto {
 // ============================================================================
 
 export interface AIProvider {
-  analyzeText(mode: AnalysisMode, text: string, context?: string): Promise<TextAnalysisDto>;
+  analyzeText(
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    text: string,
+    context?: string,
+    explanationLocale?: AppLocale
+  ): Promise<TextAnalysisDto>;
 }

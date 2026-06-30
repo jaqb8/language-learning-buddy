@@ -2,12 +2,16 @@
 import AuthLayout from "@/layouts/AuthLayout.astro";
 import { LoginForm } from "@/components/features/auth/LoginForm";
 import { isFeatureEnabled } from "@/features/feature-flags.service";
+import { createTranslator } from "@/lib/i18n";
 
 if (!isFeatureEnabled("auth")) {
   return Astro.redirect("/");
 }
+
+const { locale } = Astro.locals;
+const t = createTranslator(locale);
 ---
 
-<AuthLayout title="Logowanie - Language Learning Buddy">
-  <LoginForm client:load />
+<AuthLayout title={t("page.login.title")}>
+  <LoginForm locale={locale} client:load />
 </AuthLayout>

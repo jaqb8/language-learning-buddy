@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,17 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogIn } from "lucide-react";
-import { loginSchema, type LoginFormData } from "@/lib/validation/auth-schemas";
+import { createLoginSchema, type LoginFormData } from "@/lib/validation/auth-schemas";
 import { useAuthActions } from "@/lib/hooks/useAuthActions";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
-export function LoginForm() {
+export function LoginForm({ locale = "en" }: { locale?: AppLocale }) {
+  return (
+    <I18nProvider locale={locale}>
+      <LoginFormContent />
+    </I18nProvider>
+  );
+}
+
+function LoginFormContent() {
+  const { t } = useI18n();
+  const schema = useMemo(() => createLoginSchema(t), [t]);
   const { login, isLoading } = useAuthActions();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     mode: "onBlur",
   });
 
@@ -26,17 +38,17 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Logowanie</CardTitle>
-        <CardDescription>Wprowadź swoje dane, aby się zalogować</CardDescription>
+        <CardTitle className="text-2xl font-bold">{t("auth.login.title")}</CardTitle>
+        <CardDescription>{t("auth.login.description")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="twoj@email.com"
+              placeholder={t("auth.emailPlaceholder")}
               {...register("email")}
               disabled={isLoading}
               aria-invalid={!!errors.email}
@@ -52,7 +64,7 @@ export function LoginForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Hasło</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -75,7 +87,7 @@ export function LoginForm() {
         <CardFooter className="flex flex-col space-y-4 pt-1">
           <div className="text-sm w-full">
             <a href="/forgot-password" className="text-primary hover:underline">
-              Zapomniałeś hasła?
+              {t("auth.login.forgot")}
             </a>
           </div>
           <Button
@@ -88,11 +100,11 @@ export function LoginForm() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> Logowanie...
+                <Loader2 className="size-4 animate-spin" /> {t("auth.login.submitting")}
               </>
             ) : (
               <>
-                <LogIn className="size-4" /> Zaloguj się
+                <LogIn className="size-4" /> {t("auth.login.submit")}
               </>
             )}
           </Button>
@@ -101,7 +113,7 @@ export function LoginForm() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Lub</span>
+              <span className="bg-card px-2 text-muted-foreground">{t("auth.or")}</span>
             </div>
           </div>
           <Button
@@ -133,13 +145,13 @@ export function LoginForm() {
                 fill="#EA4335"
               />
             </svg>
-            Zaloguj się przez Google
+            {t("auth.login.google")}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Nie masz konta?{" "}
+            {t("auth.login.noAccount")}{" "}
             <a href="/signup" className="text-primary hover:underline font-medium">
-              Zarejestruj się
+              {t("auth.signup.submit")}
             </a>
           </p>
         </CardFooter>

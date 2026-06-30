@@ -10,17 +10,31 @@ export class AnalysisResultComponent {
   readonly textDiffContainer: Locator;
   readonly originalText: Locator;
   readonly correctedText: Locator;
+  readonly translationToggle: Locator;
+  readonly translation: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.loadingState = page.getByRole("status", { name: /ładowanie wyników analizy/i });
-    this.correctResult = page.getByRole("status", { name: /wynik analizy - tekst poprawny/i });
-    this.errorResult = page.getByRole("article", { name: /wynik analizy - znaleziono błędy/i });
+    this.loadingState = page.getByRole("status", { name: /(ładowanie wyników analizy|loading analysis results)/i });
+    this.correctResult = page.getByRole("status", {
+      name: /(wynik analizy - tekst poprawny|analysis result - text is correct)/i,
+    });
+    this.errorResult = page.getByRole("article", {
+      name: /(wynik analizy - znaleziono błędy|analysis result - issues found)/i,
+    });
     this.explanation = page.locator(".rounded-md.bg-muted.p-3").filter({ hasText: /.+/ }).first();
-    this.saveButton = page.getByRole("button", { name: /dodaj.*do listy|element już zapisany|zaloguj się.*dodać/i });
-    this.textDiffContainer = page.getByRole("region", { name: /porównanie tekstu/i });
-    this.originalText = page.getByLabel(/tekst oryginalny z zaznaczonymi błędami/i);
-    this.correctedText = page.getByLabel(/tekst poprawiony z zaznaczonymi zmianami/i);
+    this.saveButton = page.getByRole("button", {
+      name: /dodaj.*do listy|element już zapisany|zaloguj się.*dodać|add.*learning list|item already saved|log in to add/i,
+    });
+    this.textDiffContainer = page.getByRole("region", { name: /(porównanie tekstu|comparison of the original)/i });
+    this.originalText = page.getByLabel(
+      /(tekst oryginalny z zaznaczonymi błędami|original text with highlighted issues)/i
+    );
+    this.correctedText = page.getByLabel(
+      /(tekst poprawiony z zaznaczonymi zmianami|corrected text with highlighted changes)/i
+    );
+    this.translationToggle = page.getByTestId("toggle-translation-button");
+    this.translation = page.getByTestId("text-diff-translation");
   }
 
   async waitForLoading() {
@@ -49,7 +63,7 @@ export class AnalysisResultComponent {
 
   async isSaved() {
     const buttonText = await this.saveButton.textContent();
-    return buttonText?.includes("Zapisano");
+    return /Zapisano|Saved/.test(buttonText ?? "");
   }
 
   async getOriginalText() {

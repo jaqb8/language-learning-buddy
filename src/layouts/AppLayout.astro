@@ -13,21 +13,21 @@ interface Props {
 }
 
 const { title = "Language Learning Buddy" } = Astro.props;
-const { user, supabase } = Astro.locals;
+const { user, supabase, locale } = Astro.locals;
 
 const { initialStats, initialSettings, status } = user
   ? await fetchInitialUserData(supabase)
   : { initialStats: null, initialSettings: null, status: "unauthenticated" as const };
 ---
 
-<Layout title={title}>
+<Layout title={title} locale={locale}>
   <AuthInitializer user={user} client:only="react" />
-  <InitialUserDataErrorToast status={status} client:load />
+  <InitialUserDataErrorToast status={status} locale={locale} client:load />
   <PointsInitializer initialStats={initialStats} status={status} client:only="react" />
   <SettingsInitializer initialSettings={initialSettings} status={status} client:only="react" />
-  <Header client:load />
+  <Header locale={locale} client:load />
   <main class="flex-1">
     <slot />
   </main>
-  <Footer />
+  <Footer locale={locale} />
 </Layout>

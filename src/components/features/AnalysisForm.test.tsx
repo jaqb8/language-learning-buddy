@@ -4,6 +4,25 @@ import userEvent from "@testing-library/user-event";
 import { AnalysisForm } from "./AnalysisForm";
 
 describe("AnalysisForm", () => {
+  it("uses a placeholder matching the selected language", () => {
+    render(
+      <AnalysisForm
+        text=""
+        onTextChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onClear={vi.fn()}
+        isLoading={false}
+        isAnalyzing={false}
+        maxLength={500}
+        quota={null}
+        formatResetTime={() => ""}
+        language="pl"
+      />
+    );
+
+    expect(screen.getByPlaceholderText("Enter your Polish text here...")).toBeVisible();
+  });
+
   it("disables Clear button when text is empty (idle)", () => {
     render(
       <AnalysisForm
@@ -19,10 +38,11 @@ describe("AnalysisForm", () => {
         analysisContext=""
         onAnalysisContextChange={vi.fn()}
         isAuth={true}
+        language="en"
       />
     );
 
-    expect(screen.getByRole("button", { name: /wyczyść/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /clear/i })).toBeDisabled();
   });
 
   it("allows opening context accordion in idle, but keeps its textarea disabled", async () => {
@@ -42,15 +62,16 @@ describe("AnalysisForm", () => {
         analysisContext=""
         onAnalysisContextChange={vi.fn()}
         isAuth={true}
+        language="en"
       />
     );
 
-    const contextTrigger = screen.getByRole("button", { name: /kontekst/i });
+    const contextTrigger = screen.getByRole("button", { name: /context/i });
     expect(contextTrigger).toBeEnabled();
 
     await user.click(contextTrigger);
 
-    expect(screen.getByPlaceholderText(/wpisz tutaj dodatkowy kontekst/i)).toBeDisabled();
+    expect(screen.getByPlaceholderText(/enter additional context/i)).toBeDisabled();
   });
 
   it("enables Clear button when text is non-empty and not analyzing", () => {
@@ -68,10 +89,11 @@ describe("AnalysisForm", () => {
         analysisContext=""
         onAnalysisContextChange={vi.fn()}
         isAuth={true}
+        language="en"
       />
     );
 
-    expect(screen.getByRole("button", { name: /wyczyść/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /clear/i })).toBeEnabled();
   });
 
   it("scrolls to the main textarea when clicking Clear", async () => {
@@ -97,10 +119,11 @@ describe("AnalysisForm", () => {
         analysisContext=""
         onAnalysisContextChange={vi.fn()}
         isAuth={true}
+        language="en"
       />
     );
 
-    await user.click(screen.getByRole("button", { name: /wyczyść/i }));
+    await user.click(screen.getByRole("button", { name: /clear/i }));
 
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(scrollSpy).toHaveBeenCalled();

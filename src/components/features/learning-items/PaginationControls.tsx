@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import type { PaginationViewModel } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 interface PaginationControlsProps {
   pagination: PaginationViewModel;
@@ -7,6 +8,7 @@ interface PaginationControlsProps {
 }
 
 export function PaginationControls({ pagination, onPageChange }: PaginationControlsProps) {
+  const { t } = useI18n();
   return (
     <div className="flex items-center justify-between gap-4 mt-6">
       <Button
@@ -14,15 +16,15 @@ export function PaginationControls({ pagination, onPageChange }: PaginationContr
         onClick={() => onPageChange(pagination.page - 1)}
         disabled={!pagination.hasPreviousPage}
       >
-        Poprzednia
+        {t("learning.previous")}
       </Button>
 
       <span className="text-sm text-muted-foreground">
-        Strona {pagination.page} z {pagination.totalPages}
+        {t("learning.page", { page: pagination.page, total: pagination.totalPages })}
       </span>
 
       <Button variant="outline" onClick={() => onPageChange(pagination.page + 1)} disabled={!pagination.hasNextPage}>
-        Następna
+        {t("learning.next")}
       </Button>
     </div>
   );

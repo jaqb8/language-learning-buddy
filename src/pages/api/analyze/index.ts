@@ -14,9 +14,9 @@ import { OpenRouterAIProvider, openRouterService } from "@/lib/services/openrout
 import { GamificationService } from "@/lib/services/gamification";
 import { SettingsService } from "@/lib/services/settings";
 import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-helpers";
-import { isValidAnalysisMode } from "@/lib/analysis-mode.constants";
+import { isValidAnalysisLanguage, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
 import { isGamificationSuccess } from "@/lib/analysis-gamification";
-import type { AnalysisMode } from "@/types";
+import type { AnalysisLanguage, AnalysisMode } from "@/types";
 
 export const prerender = false;
 
@@ -30,6 +30,12 @@ const analyzeTextSchema = z.object({
     .default("grammar_and_spelling")
     .refine((val): val is AnalysisMode => isValidAnalysisMode(val), {
       message: "validation_error_invalid_mode",
+    }),
+  language: z
+    .string()
+    .default("en")
+    .refine((val): val is AnalysisLanguage => isValidAnalysisLanguage(val), {
+      message: "validation_error_invalid_language",
     }),
   analysisContext: z
     .string()
@@ -47,10 +53,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return createValidationErrorResponse(validationResult.error);
     }
 
-    const { text, mode, analysisContext } = validationResult.data;
+    const { text, mode, language, analysisContext } = validationResult.data;
 
     const aiProvider = new OpenRouterAIProvider(openRouterService);
-    const result = await new AnalysisService(aiProvider, locals.supabase).analyzeText(text, mode, analysisContext);
+    const result = await new AnalysisService(aiProvider, locals.supabase).analyzeText(
+      text,
+      mode,
+      language,
+      analysisContext,
+      locals.locale
+    );
 
     if (locals.user) {
       let pointsEnabled = false;

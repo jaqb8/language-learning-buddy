@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { GamificationBadge } from "@/components/features/gamification/GamificationBadge";
 import { ModeToggle } from "@/components/shared/ModeToggle";
+import { LanguageSelector, LanguageSelectorLabel } from "@/components/shared/LanguageSelector";
+import { useI18n } from "@/lib/i18n";
 import type { HeaderVM } from "./header.model";
 
 interface MenuItem {
@@ -21,6 +23,8 @@ const getInitials = (email: string): string => {
 };
 
 export function HeaderMobile({ vm }: { vm: HeaderVM }) {
+  const { locale, t } = useI18n();
+
   return (
     <div className="block lg:hidden">
       <div className="flex items-center justify-between px-4">
@@ -44,7 +48,12 @@ export function HeaderMobile({ vm }: { vm: HeaderVM }) {
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" data-test-id="header-mobile-menu-trigger">
+              <Button
+                variant="outline"
+                size="icon"
+                data-test-id="header-mobile-menu-trigger"
+                aria-label={t("header.openMenu")}
+              >
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
@@ -78,7 +87,7 @@ export function HeaderMobile({ vm }: { vm: HeaderVM }) {
                       <Button asChild variant="outline" className="w-full" data-test-id="header-settings-button-mobile">
                         <a href="/settings" className="flex items-center justify-center gap-2">
                           <Settings className="size-4" />
-                          Ustawienia
+                          {t("header.settings")}
                         </a>
                       </Button>
                       <form action="/api/auth/logout" method="POST">
@@ -88,7 +97,7 @@ export function HeaderMobile({ vm }: { vm: HeaderVM }) {
                           className="w-full"
                           data-test-id="header-logout-button-mobile"
                         >
-                          Wyloguj
+                          {t("header.logout")}
                         </Button>
                       </form>
                     </>
@@ -97,16 +106,20 @@ export function HeaderMobile({ vm }: { vm: HeaderVM }) {
                   {vm.auth.kind === "unauthenticated" && (
                     <>
                       <Button asChild variant="outline" data-test-id="header-login-button-mobile">
-                        <a href="/login">Zaloguj</a>
+                        <a href="/login">{t("header.login")}</a>
                       </Button>
                       <Button asChild data-test-id="header-signup-button-mobile">
-                        <a href="/signup">Zarejestruj</a>
+                        <a href="/signup">{t("header.signup")}</a>
                       </Button>
                     </>
                   )}
                 </div>
 
-                <ModeToggle>Przełącz motyw</ModeToggle>
+                <div className="space-y-2">
+                  <LanguageSelectorLabel locale={locale} />
+                  <LanguageSelector locale={locale} variant="full" />
+                </div>
+                <ModeToggle>{t("theme.toggle")}</ModeToggle>
               </div>
             </SheetContent>
           </Sheet>

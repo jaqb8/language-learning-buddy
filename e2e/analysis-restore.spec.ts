@@ -11,6 +11,15 @@ test.describe("Analysis State Restore After Login", () => {
   let sessionStorage: SessionStorageHelper;
 
   test.beforeEach(async ({ page }) => {
+    await page.context().addCookies([
+      {
+        name: "app_locale",
+        value: "pl",
+        domain: "localhost",
+        path: "/",
+        sameSite: "Lax",
+      },
+    ]);
     analyzePage = new AnalyzePage(page);
     loginPage = new LoginPage(page);
     header = new HeaderComponent(page);
@@ -20,13 +29,14 @@ test.describe("Analysis State Restore After Login", () => {
   test("should restore analysis state after login - basic flow with errors", async ({ page }) => {
     const testEmail = process.env.E2E_USERNAME || "test@example.com";
     const testPassword = process.env.E2E_PASSWORD || "password123";
-    const textWithError = "I is a student. He go to school.";
+    const textWithError = "Ja lubić czytać książki.";
 
     await analyzePage.goto();
     await expect(analyzePage.heading).toBeVisible();
 
     await expect(header.logoutButton).not.toBeVisible();
 
+    await analyzePage.form.selectLanguage("pl");
     await analyzePage.form.selectMode("grammar");
     await analyzePage.form.fillText(textWithError);
     await analyzePage.form.submitAnalysis();
@@ -62,6 +72,7 @@ test.describe("Analysis State Restore After Login", () => {
 
     const restoredText = await analyzePage.getTextInputValue();
     expect(restoredText).toBe(textWithError);
+    expect(await analyzePage.form.getSelectedLanguage()).toContain("Polski");
 
     await page.waitForURL((url) => !url.searchParams.has("restoreAnalysis"), { timeout: 3000 });
 

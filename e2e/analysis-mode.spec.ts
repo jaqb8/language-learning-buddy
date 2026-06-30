@@ -44,6 +44,46 @@ test.describe("Analysis Mode Selection and Functionality", () => {
     expect(persistedMode).toContain("Mowa potoczna");
   });
 
+  test("should select and persist analysis language", async ({ page }) => {
+    await analyzePage.goto();
+    await expect(analyzePage.heading).toBeVisible();
+
+    expect(await analyzePage.form.getSelectedLanguage()).toContain("Angielski");
+    await analyzePage.form.selectLanguage("pl");
+    expect(await analyzePage.form.getSelectedLanguage()).toContain("Polski");
+
+    await page.reload();
+    await expect(analyzePage.heading).toBeVisible();
+    expect(await analyzePage.form.getSelectedLanguage()).toContain("Polski");
+    await expect(analyzePage.form.textInput).toHaveAttribute(
+      "placeholder",
+      "Wpisz tutaj swój tekst w języku polskim..."
+    );
+  });
+
+  test("should analyze Polish text, translate it to English and save its language", async ({ page }) => {
+    await clearLearningItems();
+    await analyzePage.goto();
+    await expect(analyzePage.heading).toBeVisible();
+
+    await analyzePage.form.selectLanguage("pl");
+    await analyzePage.form.selectMode("grammar");
+    await analyzePage.form.fillText("Ja lubić czytać książki.");
+    await analyzePage.form.submitAnalysis();
+    await analyzePage.result.waitForResult();
+
+    await expect(analyzePage.result.errorResult).toBeVisible();
+    await analyzePage.result.translationToggle.click();
+    await expect(analyzePage.result.translation).toContainText("I like reading books.");
+
+    await analyzePage.result.saveToLearningList();
+    await expect(page.getByText(/zapisano na liście do nauki/i)).toBeVisible();
+
+    await header.navigateToLearningList();
+    await learningListPage.waitForItems();
+    expect(await learningListPage.getFirstItemLanguageBadge()).toContain("Polski");
+  });
+
   test("should analyze text in grammar mode and save with correct badge", async ({ page }) => {
     // Arrange
     const textWithGrammarError = "I is a student. He go to school.";

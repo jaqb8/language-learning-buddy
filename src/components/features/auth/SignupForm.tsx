@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,17 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2, UserPlus } from "lucide-react";
-import { signupSchema, type SignupFormData } from "@/lib/validation/auth-schemas";
+import { createSignupSchema, type SignupFormData } from "@/lib/validation/auth-schemas";
 import { useAuthActions } from "@/lib/hooks/useAuthActions";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
-export function SignupForm() {
+export function SignupForm({ locale = "en" }: { locale?: AppLocale }) {
+  return (
+    <I18nProvider locale={locale}>
+      <SignupFormContent />
+    </I18nProvider>
+  );
+}
+
+function SignupFormContent() {
+  const { t } = useI18n();
+  const schema = useMemo(() => createSignupSchema(t), [t]);
   const { signup, isLoading } = useAuthActions();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
+    resolver: zodResolver(schema),
     mode: "onBlur",
   });
 
@@ -26,17 +38,17 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Rejestracja</CardTitle>
-        <CardDescription>Utwórz nowe konto, aby rozpocząć naukę</CardDescription>
+        <CardTitle className="text-2xl font-bold">{t("auth.signup.title")}</CardTitle>
+        <CardDescription>{t("auth.signup.description")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("auth.email")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="twoj@email.com"
+              placeholder={t("auth.emailPlaceholder")}
               {...register("email")}
               disabled={isLoading}
               aria-invalid={!!errors.email}
@@ -51,7 +63,7 @@ export function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Hasło</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Input
               id="password"
               type="password"
@@ -70,7 +82,7 @@ export function SignupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Potwierdź hasło</Label>
+            <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -93,11 +105,11 @@ export function SignupForm() {
           <Button type="submit" className="w-full" disabled={isLoading} size="lg" aria-busy={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> Rejestracja...
+                <Loader2 className="size-4 animate-spin" /> {t("auth.signup.submitting")}
               </>
             ) : (
               <>
-                <UserPlus className="size-4" /> Zarejestruj się
+                <UserPlus className="size-4" /> {t("auth.signup.submit")}
               </>
             )}
           </Button>
@@ -106,7 +118,7 @@ export function SignupForm() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Lub</span>
+              <span className="bg-card px-2 text-muted-foreground">{t("auth.or")}</span>
             </div>
           </div>
           <Button
@@ -138,13 +150,13 @@ export function SignupForm() {
                 fill="#EA4335"
               />
             </svg>
-            Zaloguj się przez Google
+            {t("auth.signup.google")}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">
-            Masz już konto?{" "}
+            {t("auth.signup.hasAccount")}{" "}
             <a href="/login" className="text-primary hover:underline font-medium">
-              Zaloguj się
+              {t("auth.login.submit")}
             </a>
           </p>
         </CardFooter>

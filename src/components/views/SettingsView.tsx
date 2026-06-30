@@ -14,48 +14,42 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
-export function SettingsView() {
+export function SettingsView({ locale = "en" }: { locale?: AppLocale }) {
+  return (
+    <I18nProvider locale={locale}>
+      <SettingsViewContent />
+    </I18nProvider>
+  );
+}
+
+function SettingsViewContent() {
+  const { t } = useI18n();
   const {
     isLoaded,
     gamificationBetaTagEnabled,
-    betaModesBetaTagEnabled,
     currentPointsEnabled,
     currentContextEnabled,
-    currentBetaModesEnabled,
     isSavingPoints,
     isSavingContext,
-    isSavingBetaModes,
     isConfirmOpen,
     setConfirmOpen,
     onPointsCheckedChange,
     confirmDisablePoints,
     toggleContext,
-    toggleBetaModes,
   } = useSettingsViewController();
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6 lg:p-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Ustawienia</h1>
-        <p className="text-muted-foreground text-base sm:text-lg">
-          Zarządzaj funkcjami aplikacji i dostosuj sposób działania analizy.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("settings.title")}</h1>
+        <p className="text-muted-foreground text-base sm:text-lg">{t("settings.subtitle")}</p>
       </header>
 
-      <section className="space-y-4" aria-label="Opcje ustawień">
+      <section className="space-y-4" aria-label={t("settings.optionsAria")}>
         {!isLoaded ? (
           <>
-            <Card>
-              <CardHeader className="space-y-2">
-                <Skeleton className="h-5 w-48" />
-                <Skeleton className="h-4 w-80" />
-              </CardHeader>
-              <CardContent className="flex items-center justify-between gap-4">
-                <Skeleton className="h-4 w-40" />
-                <Skeleton className="h-5 w-10 rounded-full" />
-              </CardContent>
-            </Card>
             <Card>
               <CardHeader className="space-y-2">
                 <Skeleton className="h-5 w-48" />
@@ -82,23 +76,21 @@ export function SettingsView() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span>Procent poprawnych analiz</span>
+                  <span>{t("settings.points.title")}</span>
                   {gamificationBetaTagEnabled && <BetaBadge />}
                 </CardTitle>
-                <CardDescription>Wyświetla procent analiz bez błędów i pomaga śledzić postępy w nauce.</CardDescription>
+                <CardDescription>{t("settings.points.description")}</CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="text-sm text-muted-foreground">
-                  {currentPointsEnabled
-                    ? "Funkcja jest aktywna."
-                    : "Funkcja jest wyłączona, statystyki nie będą zbierane."}
+                  {currentPointsEnabled ? t("settings.points.active") : t("settings.points.inactive")}
                 </div>
                 <Switch
                   checked={currentPointsEnabled}
                   className="cursor-pointer"
                   disabled={!isLoaded || isSavingPoints}
                   onCheckedChange={onPointsCheckedChange}
-                  aria-label="Zliczanie punktów"
+                  aria-label={t("settings.points.aria")}
                   data-test-id="settings-points-switch"
                 />
               </CardContent>
@@ -106,49 +98,20 @@ export function SettingsView() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Kontekst analizy</CardTitle>
-                <CardDescription>
-                  Włącz, aby dodawać dodatkowy kontekst i poprawić jakość analizy tekstu.
-                </CardDescription>
+                <CardTitle>{t("settings.context.title")}</CardTitle>
+                <CardDescription>{t("settings.context.description")}</CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">
                 <div className="text-sm text-muted-foreground">
-                  {currentContextEnabled ? "Pole kontekstu jest widoczne." : "Pole kontekstu jest ukryte."}
+                  {currentContextEnabled ? t("settings.context.visible") : t("settings.context.hidden")}
                 </div>
                 <Switch
                   checked={currentContextEnabled}
                   className="cursor-pointer"
                   disabled={!isLoaded || isSavingContext}
                   onCheckedChange={toggleContext}
-                  aria-label="Kontekst analizy"
+                  aria-label={t("settings.context.aria")}
                   data-test-id="settings-context-switch"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>Tryby analizy beta</span>
-                  {betaModesBetaTagEnabled && <BetaBadge />}
-                </CardTitle>
-                <CardDescription>
-                  Eksperymentalne tryby analizy z ulepszonymi promptami. Po wyłączeniu znikają z interfejsu.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between gap-4">
-                <div className="text-sm text-muted-foreground">
-                  {currentBetaModesEnabled
-                    ? "Tryby beta są widoczne w selektorze."
-                    : "Tryby beta są ukryte w interfejsie."}
-                </div>
-                <Switch
-                  checked={currentBetaModesEnabled}
-                  className="cursor-pointer"
-                  disabled={!isLoaded || isSavingBetaModes}
-                  onCheckedChange={toggleBetaModes}
-                  aria-label="Tryby analizy beta"
-                  data-test-id="settings-beta-modes-switch"
                 />
               </CardContent>
             </Card>
@@ -159,16 +122,14 @@ export function SettingsView() {
       <AlertDialog open={isConfirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Wyłączyć śledzenie postępów?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Twoje statystyki analiz zostaną trwale usunięte. Tej operacji nie można cofnąć.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("settings.disable.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("settings.disable.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSavingPoints}>Anuluj</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSavingPoints}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction asChild>
               <Button variant="destructive" onClick={confirmDisablePoints} disabled={isSavingPoints}>
-                Wyłącz i usuń statystyki
+                {t("settings.disable.confirm")}
               </Button>
             </AlertDialogAction>
           </AlertDialogFooter>

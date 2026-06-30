@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useTextAnalysis } from "../../lib/hooks/useTextAnalysis";
 import { useAnalysisModeStore } from "../../lib/stores/analysis-mode.store";
+import { useAnalysisLanguageStore } from "../../lib/stores/analysis-language.store";
 import { usePendingAnalysisStore } from "../../lib/stores/pending-analysis.store";
 import { useAuthStore } from "../../lib/stores/auth.store";
 import { usePointsStore } from "../../lib/stores/points.store";
@@ -14,17 +15,29 @@ import { AnalysisResult } from "../features/AnalysisResult";
 import type { CreateLearningItemCommand } from "../../types";
 import { buildAnalyzeViewModel } from "./analyze/analyzeView.model";
 import { useAnalyzeViewEffects } from "./analyze/useAnalyzeViewEffects";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
 const MAX_TEXT_LENGTH = 500;
 
-export function AnalyzeView() {
+export function AnalyzeView({ locale = "en" }: { locale?: AppLocale }) {
+  return (
+    <I18nProvider locale={locale}>
+      <AnalyzeViewContent />
+    </I18nProvider>
+  );
+}
+
+function AnalyzeViewContent() {
+  const { locale, t } = useI18n();
   const { state, quota, setText, setAnalysisContext, analyzeText, saveResult, clear } = useTextAnalysis();
   const mode = useAnalysisModeStore((state) => state.mode);
+  const language = useAnalysisLanguageStore((state) => state.language);
   const { clearPendingAnalysis } = usePendingAnalysisStore();
   const isAuth = useAuthStore((state) => state.isAuth);
   const incrementStats = usePointsStore((state) => state.incrementStats);
   const { pointsEnabled: pointsSettingEnabled, contextEnabled, isLoaded } = useSettingsStore();
   const gamificationFeatureEnabled = isFeatureEnabled("gamification");
+  const inputLanguage = t(language === "pl" ? "analysis.inputLanguage.pl" : "analysis.inputLanguage.en");
 
   const vm = buildAnalyzeViewModel({
     state: { status: state.status, result: state.result },
@@ -63,13 +76,13 @@ export function AnalyzeView() {
   return (
     <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Analiza tekstu</h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("analysis.title")}</h1>
         <p className="text-muted-foreground text-base sm:text-lg">
-          Wprowadź tekst w języku angielskim, a AI pomoże Ci znaleźć błędy gramtyczne oraz stylistyczne.
+          {t("analysis.subtitle", { language: inputLanguage })}
         </p>
       </header>
 
-      <section aria-label="Formularz analizy tekstu">
+      <section aria-label={t("analysis.formAria")}>
         {vm.shouldShowSettingsSkeleton ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -88,26 +101,28 @@ export function AnalyzeView() {
           <AnalysisForm
             text={state.text}
             onTextChange={setText}
-            onSubmit={() => analyzeText(mode)}
+            onSubmit={() => analyzeText(mode, language)}
             onClear={clear}
             isLoading={vm.isAnalyzing}
             isAnalyzing={vm.isAnalyzing}
             maxLength={MAX_TEXT_LENGTH}
             quota={vm.quotaForForm}
-            formatResetTime={formatResetTime}
+            formatResetTime={(resetAt) => formatResetTime(resetAt, locale)}
             analysisContext={state.analysisContext}
             onAnalysisContextChange={setAnalysisContext}
             isAuth={isAuth}
+            language={language}
           />
         )}
       </section>
       {vm.showResultSection && (
-        <section aria-label="Wyniki analizy" aria-live="polite">
+        <section aria-label={t("analysis.resultsAria")} aria-live="polite">
           <AnalysisResult
             isLoading={vm.isAnalyzing}
             analysisResult={state.result}
             isSaved={state.isCurrentResultSaved}
-            analysisMode={mode}
+            analysisMode={state.resultMode ?? mode}
+            analysisLanguage={state.resultLanguage ?? language}
             analysisContext={state.analysisContext}
             onSave={handleSave}
             earnedPoint={

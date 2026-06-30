@@ -16,7 +16,8 @@ import type {
   OpenRouterResponse,
 } from "./openrouter.types";
 import type { AIConfigService } from "../ai-config/ai-config.service";
-import type { AnalysisMode, TextAnalysisDto } from "../../../types";
+import type { AnalysisLanguage, AnalysisMode, TextAnalysisDto } from "../../../types";
+import { DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_TOKENS_LIMIT = 4096;
@@ -47,8 +48,14 @@ export class OpenRouterService {
    * @param context - Optional context provided by the user
    * @returns Analysis result with corrections and explanations if needed
    */
-  async analyzeText(mode: AnalysisMode, text: string, context?: string): Promise<TextAnalysisDto> {
-    const { prompt, schema } = this.aiConfig.getAnalysisModeConfig(mode);
+  async analyzeText(
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    text: string,
+    context?: string,
+    explanationLocale: AppLocale = DEFAULT_APP_LOCALE
+  ): Promise<TextAnalysisDto> {
+    const { prompt, schema } = this.aiConfig.getAnalysisModeConfig(mode, language, explanationLocale);
 
     const trimmedContext = context?.trim();
     let userMessage: string;

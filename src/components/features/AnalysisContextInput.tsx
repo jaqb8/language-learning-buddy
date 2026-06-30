@@ -3,6 +3,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Info, ChevronDown, FileText, CircleHelp } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface AnalysisContextInputProps {
   analysisContext: string;
@@ -19,6 +20,7 @@ export function AnalysisContextInput({
   triggerDisabled = false,
   inputDisabled = false,
 }: AnalysisContextInputProps) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const isOverLimit = analysisContext.length > maxLength;
 
@@ -48,7 +50,7 @@ export function AnalysisContextInput({
         >
           <div className="flex items-center gap-2">
             <FileText className="size-4" aria-hidden="true" />
-            <span className="text-sm font-medium">Kontekst (opcjonalne)</span>
+            <span className="text-sm font-medium">{t("analysis.context.title")}</span>
           </div>
           <ChevronDown
             className={`size-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
@@ -62,16 +64,13 @@ export function AnalysisContextInput({
       >
         <div className="flex items-center gap-1 text-muted-foreground">
           <Info className="size-3 shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            Podaj dodatkowy kontekst do analizowanego wyrażenia. Zostanie on uwzględniony podczas analizy pod kątem
-            odpowiedniego doboru słownictwa i gramatyki.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("analysis.context.description")}</p>
         </div>
         <Textarea
           id="analysis-context-input"
           value={analysisContext}
           onChange={handleContextChange}
-          placeholder="Wpisz tutaj dodatkowy kontekst..."
+          placeholder={t("analysis.context.placeholder")}
           disabled={inputDisabled}
           rows={4}
           className="text-base"
@@ -90,12 +89,12 @@ export function AnalysisContextInput({
             data-test-id="analysis-context-disabled-hint"
           >
             <CircleHelp className="size-3 shrink-0" aria-hidden="true" />
-            <p>Podaj treść analizy, aby dodać dodatkowy kontekst</p>
+            <p>{t("analysis.context.requiresText")}</p>
           </div>
         )}
         <div className="flex items-center justify-between gap-2">
           <p id="context-char-count-helper" className="text-destructive text-xs">
-            {isOverLimit && "Przekroczono limit znaków. "}
+            {isOverLimit && t("analysis.limitExceeded")}
           </p>
           <div className="flex items-center gap-2">
             {hasContext && (
@@ -105,10 +104,10 @@ export function AnalysisContextInput({
                 onClick={handleClear}
                 disabled={inputDisabled}
                 className="h-6"
-                aria-label="Wyczyść kontekst"
+                aria-label={t("analysis.context.clearAria")}
                 data-test-id="clear-context-button"
               >
-                Wyczyść
+                {t("analysis.clear")}
               </Button>
             )}
             {!inputDisabled && (

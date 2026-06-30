@@ -3,18 +3,21 @@ import AppLayout from "../layouts/AppLayout.astro";
 import { LearningItemsView } from "../components/views/LearningItemsView";
 import { isFeatureEnabled } from "@/features/feature-flags.service";
 import { fetchInitialLearningItems } from "@/lib/fetch-initial-learning-items";
+import { createTranslator } from "@/lib/i18n";
 
 if (!isFeatureEnabled("learning-items")) {
   return Astro.redirect("/");
 }
 
 const { user, supabase } = Astro.locals;
+const { locale } = Astro.locals;
+const t = createTranslator(locale);
 
 const { initialData, status } = user
   ? await fetchInitialLearningItems(supabase, user.id)
   : { initialData: null, status: "unauthenticated" as const };
 ---
 
-<AppLayout title="Moje elementy do nauki - Language Learning Buddy">
-  <LearningItemsView initialData={initialData} initialLoadError={status === "error"} client:load />
+<AppLayout title={t("page.learningList.title")}>
+  <LearningItemsView locale={locale} initialData={initialData} initialLoadError={status === "error"} client:load />
 </AppLayout>

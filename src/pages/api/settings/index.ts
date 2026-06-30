@@ -9,15 +9,10 @@ const updateSettingsSchema = z
   .object({
     pointsEnabled: z.boolean().optional(),
     contextEnabled: z.boolean().optional(),
-    betaModesEnabled: z.boolean().optional(),
   })
-  .refine(
-    (data) =>
-      data.pointsEnabled !== undefined || data.contextEnabled !== undefined || data.betaModesEnabled !== undefined,
-    {
-      message: "validation_error_settings_empty",
-    }
-  );
+  .refine((data) => data.pointsEnabled !== undefined || data.contextEnabled !== undefined, {
+    message: "validation_error_settings_empty",
+  });
 
 export const GET: APIRoute = async ({ locals }) => {
   if (!locals.user) {
