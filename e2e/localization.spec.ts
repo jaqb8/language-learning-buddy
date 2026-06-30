@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { HeaderComponent } from "./page-objects";
 
 test.describe("Application language", () => {
   test.use({ storageState: undefined, locale: "pl-PL" });
@@ -14,12 +15,12 @@ test.describe("Application language", () => {
     await expect(page).toHaveTitle("Text analysis - Language Learning Buddy");
     await expect(page.getByRole("heading", { name: "Text analysis" })).toBeVisible();
 
-    const languageSelector = page.getByTestId("language-selector");
-    expect(
-      await languageSelector.evaluate(
-        (element) => element.nextElementSibling?.getAttribute("data-test-id") === "theme-toggle-button"
-      )
-    ).toBe(true);
+    const header = new HeaderComponent(page);
+    await header.waitForHydration();
+    const preferences = page.getByTestId("header-preferences");
+    const languageSelector = preferences.getByTestId("language-selector");
+    await expect(languageSelector).toBeVisible();
+    await expect(preferences.getByTestId("theme-toggle-button")).toBeVisible();
 
     await languageSelector.click();
     await page.getByTestId("language-option-pl").click();
@@ -39,7 +40,8 @@ test.describe("Application language", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
 
-    await page.getByTestId("header-mobile-menu-trigger").click();
+    const header = new HeaderComponent(page);
+    await header.openMobileMenu();
     const menu = page.getByRole("dialog");
     await expect(menu.getByTestId("language-selector-mobile")).toBeVisible();
     await expect(menu.getByTestId("theme-toggle-button")).toBeVisible();
@@ -49,7 +51,8 @@ test.describe("Application language", () => {
 test.describe("Authenticated language menu", () => {
   test("offers language choices inside the email menu", async ({ page }) => {
     await page.goto("/");
-    await page.getByTestId("header-user-menu-trigger").click();
+    const header = new HeaderComponent(page);
+    await header.openUserMenu();
 
     await expect(page.getByTestId("header-language-menu-item")).toBeVisible();
     await page.getByTestId("header-language-menu-item").hover();

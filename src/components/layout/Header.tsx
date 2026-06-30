@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { usePointsStore } from "@/lib/stores/points.store";
 import { useSettingsStore } from "@/lib/stores/settings.store";
@@ -43,6 +44,7 @@ function HeaderContent({
   },
   menu,
 }: Navbar1Props) {
+  const [isHydrated, setIsHydrated] = useState(false);
   const { t } = useI18n();
   const { user, isAuth, isAuthInitialized } = useAuthStore();
   const { correctAnalyses, totalAnalyses } = usePointsStore();
@@ -55,6 +57,10 @@ function HeaderContent({
     { title: t("header.analyze"), url: "/" },
     { title: t("header.learningList"), url: "/learning-list" },
   ];
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const vm = buildHeaderVM({
     logo,
@@ -73,7 +79,7 @@ function HeaderContent({
   });
 
   return (
-    <section className="py-4">
+    <section className="py-4" data-test-id="header" data-hydrated={isHydrated ? "true" : "false"}>
       <HeaderDesktop vm={vm} />
       <HeaderMobile vm={vm} />
     </section>

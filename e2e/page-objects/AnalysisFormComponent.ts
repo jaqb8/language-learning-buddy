@@ -10,6 +10,7 @@ export class AnalysisFormComponent {
   readonly languageSelector: Locator;
   readonly grammarModeOption: Locator;
   readonly colloquialModeOption: Locator;
+  readonly analyzeView: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -21,9 +22,15 @@ export class AnalysisFormComponent {
     this.languageSelector = page.locator("[data-test-id='analysis-language-selector']");
     this.grammarModeOption = page.locator("[data-test-id='mode-grammar']");
     this.colloquialModeOption = page.locator("[data-test-id='mode-colloquial']");
+    this.analyzeView = page.getByTestId("analyze-view");
+  }
+
+  async waitForHydration() {
+    await expect(this.analyzeView).toHaveAttribute("data-hydrated", "true");
   }
 
   async fillText(text: string) {
+    await this.waitForHydration();
     await this.textInput.waitFor({ state: "visible" });
     await expect(this.textInput).toBeEnabled();
     await this.textInput.clear();
@@ -33,15 +40,18 @@ export class AnalysisFormComponent {
       await this.textInput.fill(text);
     }
     await expect(this.textInput).toHaveValue(text);
+    await expect(this.charCount).toContainText(`${text.length} /`);
   }
 
   async submitAnalysis() {
+    await this.waitForHydration();
     await this.submitButton.waitFor({ state: "visible" });
     await expect(this.submitButton).toBeEnabled({ timeout: 10000 });
     await this.submitButton.click();
   }
 
   async clearForm() {
+    await this.waitForHydration();
     await this.clearButton.click();
   }
 
@@ -58,6 +68,7 @@ export class AnalysisFormComponent {
   }
 
   async selectMode(mode: "grammar" | "colloquial") {
+    await this.waitForHydration();
     const currentMode = await this.getSelectedMode();
     const modeLabels =
       mode === "grammar" ? ["Gramatyka i ortografia", "Grammar and spelling"] : ["Mowa potoczna", "Colloquial speech"];
@@ -87,10 +98,12 @@ export class AnalysisFormComponent {
   }
 
   async getSelectedMode() {
+    await this.waitForHydration();
     return await this.modeSelector.textContent();
   }
 
   async selectLanguage(language: "en" | "pl") {
+    await this.waitForHydration();
     const labels = language === "en" ? ["Angielski", "English"] : ["Polski", "Polish"];
     const selectedLanguage = await this.getSelectedLanguage();
     if (labels.some((label) => selectedLanguage?.includes(label))) {
@@ -103,6 +116,7 @@ export class AnalysisFormComponent {
   }
 
   async getSelectedLanguage() {
+    await this.waitForHydration();
     return await this.languageSelector.textContent();
   }
 }

@@ -17,6 +17,7 @@ export class AnalyzePage {
 
   async goto() {
     await this.page.goto("/");
+    await this.form.waitForHydration();
   }
 
   async analyzeText(text: string) {
@@ -34,6 +35,7 @@ export class AnalyzePage {
   }
 
   async getTextInputValue(): Promise<string> {
+    await this.form.waitForHydration();
     return await this.form.textInput.inputValue();
   }
 

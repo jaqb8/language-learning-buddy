@@ -16,6 +16,7 @@ export class HeaderComponent {
   readonly themeToggleButton: Locator;
   readonly themeToggleButtonMobile: Locator;
   readonly themeToggleMenuItem: Locator;
+  readonly header: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -33,25 +34,36 @@ export class HeaderComponent {
     this.themeToggleButton = page.locator("nav button[data-test-id='theme-toggle-button']");
     this.themeToggleButtonMobile = page.locator("div.block button[data-test-id='theme-toggle-button']");
     this.themeToggleMenuItem = page.getByTestId("header-theme-toggle-menu-item");
+    this.header = page.getByTestId("header");
+  }
+
+  async waitForHydration() {
+    await this.header.waitFor({ state: "visible" });
+    await this.page.locator('[data-test-id="header"][data-hydrated="true"]').waitFor({ state: "visible" });
   }
 
   async navigateToAnalyze() {
+    await this.waitForHydration();
     await this.analyzeLink.click();
   }
 
   async navigateToLearningList() {
+    await this.waitForHydration();
     await this.learningListLink.click();
   }
 
   async navigateToLogin() {
+    await this.waitForHydration();
     await this.loginButton.click();
   }
 
   async navigateToSignup() {
+    await this.waitForHydration();
     await this.signupButton.click();
   }
 
   async openUserMenu() {
+    await this.waitForHydration();
     await this.userMenuTrigger.click();
   }
 
@@ -74,10 +86,12 @@ export class HeaderComponent {
   }
 
   async openMobileMenu() {
+    await this.waitForHydration();
     await this.mobileMenuTrigger.click();
   }
 
   async toggleTheme() {
+    await this.waitForHydration();
     const isUserMenuVisible = await this.userMenuTrigger
       .waitFor({ state: "visible", timeout: 1500 })
       .then(() => true)
@@ -93,6 +107,7 @@ export class HeaderComponent {
   }
 
   async toggleThemeMobile() {
+    await this.waitForHydration();
     await this.openMobileMenu();
     await this.themeToggleButtonMobile.click();
   }

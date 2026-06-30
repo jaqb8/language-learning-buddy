@@ -119,10 +119,10 @@ export function HeaderDesktop({ vm }: { vm: HeaderVM }) {
         )}
 
         {vm.showModeToggleDesktop ? (
-          <>
+          <div className="flex items-center gap-2" data-test-id="header-preferences">
             <LanguageSelector locale={locale} />
             <ModeToggle />
-          </>
+          </div>
         ) : null}
       </div>
     </nav>

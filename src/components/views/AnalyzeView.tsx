@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTextAnalysis } from "../../lib/hooks/useTextAnalysis";
 import { useAnalysisModeStore } from "../../lib/stores/analysis-mode.store";
 import { useAnalysisLanguageStore } from "../../lib/stores/analysis-language.store";
@@ -28,6 +28,7 @@ export function AnalyzeView({ locale = "en" }: { locale?: AppLocale }) {
 }
 
 function AnalyzeViewContent() {
+  const [isHydrated, setIsHydrated] = useState(false);
   const { locale, t } = useI18n();
   const { state, quota, setText, setAnalysisContext, analyzeText, saveResult, clear } = useTextAnalysis();
   const mode = useAnalysisModeStore((state) => state.mode);
@@ -66,6 +67,10 @@ function AnalyzeViewContent() {
     incrementStats,
   });
 
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const handleSave = useCallback(
     (command: CreateLearningItemCommand) => {
       saveResult(command);
@@ -74,7 +79,11 @@ function AnalyzeViewContent() {
   );
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <main
+      className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6 lg:p-8"
+      data-test-id="analyze-view"
+      data-hydrated={isHydrated ? "true" : "false"}
+    >
       <header className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("analysis.title")}</h1>
         <p className="text-muted-foreground text-base sm:text-lg">
