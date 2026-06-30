@@ -44,6 +44,7 @@ interface MockAPIContext {
     user: { id: string; email: string } | null;
     analysisQuota: { remaining: number; resetAt: string; limit: number } | null;
     supabase: object;
+    locale?: "en" | "pl";
   };
 }
 
@@ -108,10 +109,30 @@ describe("POST /api/analyze", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockRecordAnalysis.mockResolvedValue({ correctAnalyses: 1, totalAnalyses: 1 });
-    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true, betaModesEnabled: false });
+    mockGetUserSettings.mockResolvedValue({ pointsEnabled: true, contextEnabled: true });
   });
 
   describe("context handling", () => {
+    it("should use the current application locale for the explanation", async () => {
+      const request = createMockRequest({
+        text: "I gonna go home.",
+        mode: "grammar_and_spelling",
+      });
+
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockErrorResult);
+
+      const response = await POST(createMockContext(request, { locale: "pl" }) as Parameters<typeof POST>[0]);
+
+      expect(response.status).toBe(200);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "I gonna go home.",
+        undefined,
+        "pl"
+      );
+    });
+
     it("should pass analysisContext to AI service when provided", async () => {
       const request = createMockRequest({
         text: "I gonna go home.",
@@ -127,6 +148,7 @@ describe("POST /api/analyze", () => {
       expect(openRouterService.analyzeText).toHaveBeenCalledTimes(1);
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "grammar_and_spelling",
+        "en",
         "I gonna go home.",
         "Writing a formal business email"
       );
@@ -144,7 +166,12 @@ describe("POST /api/analyze", () => {
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
 
     it("should not include context when analysisContext is only whitespace", async () => {
@@ -159,7 +186,12 @@ describe("POST /api/analyze", () => {
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
 
     it("should work without analysisContext field at all", async () => {
@@ -173,7 +205,12 @@ describe("POST /api/analyze", () => {
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
 
     it("should trim analysisContext whitespace", async () => {
@@ -189,6 +226,7 @@ describe("POST /api/analyze", () => {
 
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "grammar_and_spelling",
+        "en",
         "Hello world.",
         "Formal email context"
       );
@@ -208,6 +246,7 @@ describe("POST /api/analyze", () => {
       expect(response.status).toBe(200);
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "colloquial_speech",
+        "en",
         "I request your assistance.",
         "Casual chat with friends"
       );
@@ -261,6 +300,7 @@ describe("POST /api/analyze", () => {
       expect(response.status).toBe(200);
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "grammar_and_spelling",
+        "en",
         "Hello.",
         "Kontekst z polskimi znakami: aecólnsz"
       );
@@ -281,7 +321,12 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello.", multilineContext);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello.",
+        multilineContext
+      );
     });
 
     it("should handle context with quotes and special JSON characters", async () => {
@@ -298,6 +343,7 @@ Third line`;
       expect(response.status).toBe(200);
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "grammar_and_spelling",
+        "en",
         "Hello.",
         'Context with "quotes" and \\backslash'
       );
@@ -445,7 +491,12 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
   });
 
@@ -460,7 +511,12 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
 
     it("should accept grammar_and_spelling mode", async () => {
@@ -474,7 +530,12 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
     });
 
     it("should accept colloquial_speech mode", async () => {
@@ -488,7 +549,7 @@ Third line`;
       const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
       expect(response.status).toBe(200);
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("colloquial_speech", "Hello world.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith("colloquial_speech", "en", "Hello world.", undefined);
     });
 
     it("should return validation error for invalid mode", async () => {
@@ -502,6 +563,53 @@ Third line`;
       expect(response.status).toBe(400);
       const body = await response.json();
       expect(body.error_code).toBe("validation_error_invalid_mode");
+      expect(openRouterService.analyzeText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("language field validation", () => {
+    it("should use English as the default language", async () => {
+      const request = createMockRequest({ text: "Hello world." });
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
+
+      const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
+
+      expect(response.status).toBe(200);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "Hello world.",
+        undefined
+      );
+    });
+
+    it("should pass Polish language to the analysis service", async () => {
+      const request = createMockRequest({ text: "Ja lubić czytać.", language: "pl" });
+      vi.mocked(openRouterService.analyzeText).mockResolvedValue({
+        ...mockErrorResult,
+        original_text: "Ja lubić czytać.",
+        corrected_text: "Lubię czytać.",
+        translation: "I like reading.",
+      });
+
+      const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
+
+      expect(response.status).toBe(200);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "pl",
+        "Ja lubić czytać.",
+        undefined
+      );
+    });
+
+    it("should reject unsupported languages", async () => {
+      const request = createMockRequest({ text: "Bonjour.", language: "fr" });
+
+      const response = await POST(createMockContext(request) as Parameters<typeof POST>[0]);
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ error_code: "validation_error_invalid_language" });
       expect(openRouterService.analyzeText).not.toHaveBeenCalled();
     });
   });
@@ -710,7 +818,12 @@ Third line`;
 
       await POST(createMockContext(request) as Parameters<typeof POST>[0]);
 
-      expect(openRouterService.analyzeText).toHaveBeenCalledWith("grammar_and_spelling", "I is happy.", undefined);
+      expect(openRouterService.analyzeText).toHaveBeenCalledWith(
+        "grammar_and_spelling",
+        "en",
+        "I is happy.",
+        undefined
+      );
     });
 
     it("should pass colloquial_speech mode to analyzeText", async () => {
@@ -725,6 +838,7 @@ Third line`;
 
       expect(openRouterService.analyzeText).toHaveBeenCalledWith(
         "colloquial_speech",
+        "en",
         "I request your assistance.",
         undefined
       );
@@ -755,7 +869,7 @@ Third line`;
       });
 
       vi.mocked(openRouterService.analyzeText).mockResolvedValue(mockCorrectResult);
-      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true, betaModesEnabled: false });
+      mockGetUserSettings.mockResolvedValue({ pointsEnabled: false, contextEnabled: true });
 
       const response = await POST(createMockContext(request, { user: mockUser }) as Parameters<typeof POST>[0]);
 

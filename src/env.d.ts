@@ -1,6 +1,7 @@
 /// <reference types="astro/client" />
 
 import type { SupabaseClient } from "./db/supabase.client.ts";
+import type { AppLocale } from "./lib/i18n.tsx";
 import type { UserViewModel } from "./types.ts";
 
 declare global {
@@ -9,6 +10,7 @@ declare global {
       supabase: SupabaseClient;
       user: UserViewModel | null;
       analysisQuota: { remaining: number; resetAt: string; limit: number } | null;
+      locale: AppLocale;
     }
   }
 }

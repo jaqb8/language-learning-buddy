@@ -39,3 +39,11 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   unobserve: vi.fn(),
   disconnect: vi.fn(),
 }));
+
+// Pointer capture is used by Radix Select but is not implemented by JSDOM.
+Object.defineProperties(HTMLElement.prototype, {
+  hasPointerCapture: { value: vi.fn(() => false), configurable: true, writable: true },
+  setPointerCapture: { value: vi.fn(), configurable: true, writable: true },
+  releasePointerCapture: { value: vi.fn(), configurable: true, writable: true },
+  scrollIntoView: { value: vi.fn(), configurable: true, writable: true },
+});

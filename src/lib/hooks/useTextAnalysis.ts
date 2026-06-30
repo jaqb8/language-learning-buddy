@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useReducer } from "react";
 import { usePendingAnalysisStore } from "../stores/pending-analysis.store";
 import { useAnalysisModeStore } from "../stores/analysis-mode.store";
+import { useAnalysisLanguageStore } from "../stores/analysis-language.store";
 import { useAuthStore } from "../stores/auth.store";
 import { formatResetTime } from "../utils";
-import type { TextAnalysisDto, CreateLearningItemCommand, ApiErrorResponse, AnalysisMode } from "../../types";
+import { normalizeAnalysisLanguage, normalizeAnalysisMode } from "../analysis-mode.constants";
+import type {
+  TextAnalysisDto,
+  CreateLearningItemCommand,
+  ApiErrorResponse,
+  AnalysisLanguage,
+  AnalysisMode,
+} from "../../types";
+import { useI18n, type AppLocale, type Translator } from "@/lib/i18n";
 
 type AnalysisStatus = "idle" | "loading" | "success" | "error";
 
@@ -12,6 +21,8 @@ interface AnalyzeViewState {
   text: string;
   analysisContext: string;
   result: TextAnalysisDto | null;
+  resultMode: AnalysisMode | null;
+  resultLanguage: AnalysisLanguage | null;
   resultTimestamp: number | null;
   isRestoredResult: boolean;
   error: string | null;
@@ -33,7 +44,13 @@ type Action =
   | { type: "SET_TEXT"; text: string }
   | { type: "SET_CONTEXT"; analysisContext: string }
   | { type: "ANALYZE_REQUEST" }
-  | { type: "ANALYZE_SUCCESS"; result: TextAnalysisDto; quota: QuotaStatus | null }
+  | {
+      type: "ANALYZE_SUCCESS";
+      result: TextAnalysisDto;
+      mode: AnalysisMode;
+      language: AnalysisLanguage;
+      quota: QuotaStatus | null;
+    }
   | { type: "ANALYZE_ERROR"; error: string }
   | { type: "ANALYZE_QUOTA_EXCEEDED"; resetAt: string; limit: number }
   | { type: "QUOTA_CLEAR" }
@@ -48,6 +65,8 @@ const INITIAL_STATE: State = {
   text: "",
   analysisContext: "",
   result: null,
+  resultMode: null,
+  resultLanguage: null,
   resultTimestamp: null,
   isRestoredResult: false,
   error: null,
@@ -56,29 +75,34 @@ const INITIAL_STATE: State = {
   hasRestored: false,
 };
 
-function mapErrorCodeToMessage(error: ApiErrorResponse): string {
+function mapErrorCodeToMessage(error: ApiErrorResponse, t: Translator, locale: AppLocale): string {
   const { error_code, data } = error;
   const errorMessages: Record<string, string> = {
-    validation_error_text_empty: "Tekst nie może być pusty.",
-    validation_error_text_too_long: "Tekst nie może przekraczać 500 znaków.",
-    configuration_error: "Błąd konfiguracji serwisu. Skontaktuj się z pomocą techniczną.",
-    authentication_error: "Błąd uwierzytelniania. Skontaktuj się z pomocą techniczną.",
-    authentication_error_unauthorized: "Musisz być zalogowany, aby wykonać tę operację.",
-    rate_limit_error: `Przekroczono limit zapytań. Spróbuj ponownie za ${Math.ceil(((data?.time_until_reset as number) ?? 0) / 1000)} sekund.`,
-    daily_quota_exceeded: `Przekroczono dzienny limit analiz dla niezalogowanych użytkowników. Limit zostanie zresetowany ${formatResetTime((data?.reset_at as string) ?? "")}. Zaloguj się, aby uzyskać więcej analiz.`,
-    invalid_request_error: "Nieprawidłowe żądanie. Sprawdź wprowadzone dane.",
-    validation_error: "Nie udało się przetworzyć odpowiedzi AI. Spróbuj ponownie.",
-    network_error: "Błąd sieci. Sprawdź połączenie i spróbuj ponownie.",
-    unknown_error: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
-    database_error: "Wystąpił błąd serwera. Spróbuj ponownie za chwilę.",
-    validation_error_original_sentence_empty: "Oryginalne zdanie jest wymagane.",
-    validation_error_corrected_sentence_empty: "Poprawione zdanie jest wymagane.",
-    validation_error_explanation_empty: "Wyjaśnienie jest wymagane.",
-    validation_error_explanation_too_long: "Wyjaśnienie nie może przekraczać 500 znaków.",
-    validation_error_analysis_context_too_long: "Kontekst nie może przekraczać 500 znaków.",
+    validation_error_text_empty: t("error.textEmpty"),
+    validation_error_text_too_long: t("error.textTooLong"),
+    configuration_error: t("error.configuration"),
+    authentication_error: t("error.authentication"),
+    authentication_error_unauthorized: t("error.unauthorized"),
+    rate_limit_error: t("error.rateLimit", {
+      seconds: Math.ceil(((data?.time_until_reset as number) ?? 0) / 1000),
+    }),
+    daily_quota_exceeded: t("error.dailyQuota", {
+      resetAt: formatResetTime((data?.reset_at as string) ?? "", locale),
+    }),
+    invalid_request_error: t("error.invalidRequest"),
+    validation_error: t("error.aiValidation"),
+    network_error: t("error.network"),
+    unknown_error: t("error.unexpected"),
+    database_error: t("error.server"),
+    validation_error_original_sentence_empty: t("error.originalRequired"),
+    validation_error_corrected_sentence_empty: t("error.correctedRequired"),
+    validation_error_explanation_empty: t("error.explanationRequired"),
+    validation_error_explanation_too_long: t("error.explanationLong"),
+    validation_error_analysis_context_too_long: t("error.contextLong"),
+    validation_error_invalid_language: t("error.invalidAnalysisLanguage"),
   };
 
-  return errorMessages[error_code] || "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.";
+  return errorMessages[error_code] || t("error.unexpected");
 }
 
 function reducer(state: State, action: Action): State {
@@ -94,6 +118,8 @@ function reducer(state: State, action: Action): State {
         ...state,
         status: "success",
         result: action.result,
+        resultMode: action.mode,
+        resultLanguage: action.language,
         resultTimestamp: Date.now(),
         isRestoredResult: false,
         error: null,
@@ -133,9 +159,11 @@ function reducer(state: State, action: Action): State {
 }
 
 export function useTextAnalysis() {
+  const { locale, t } = useI18n();
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const { pendingAnalysis, clearPendingAnalysis } = usePendingAnalysisStore();
   const { setMode } = useAnalysisModeStore();
+  const { setLanguage } = useAnalysisLanguageStore();
   const isAuth = useAuthStore((state) => state.isAuth);
 
   const checkQuota = useCallback(async () => {
@@ -175,6 +203,9 @@ export function useTextAnalysis() {
     }
 
     try {
+      const restoredMode = normalizeAnalysisMode(pendingAnalysis.mode);
+      const restoredLanguage = normalizeAnalysisLanguage(pendingAnalysis.language);
+
       dispatch({
         type: "RESTORE_PENDING",
         payload: {
@@ -182,6 +213,8 @@ export function useTextAnalysis() {
           text: pendingAnalysis.originalText,
           analysisContext: pendingAnalysis.analysisContext ?? "",
           result: pendingAnalysis.result,
+          resultMode: restoredMode,
+          resultLanguage: restoredLanguage,
           resultTimestamp: pendingAnalysis.timestamp ?? null,
           isRestoredResult: true,
           error: null,
@@ -189,7 +222,8 @@ export function useTextAnalysis() {
         },
       });
 
-      setMode(pendingAnalysis.mode);
+      setMode(restoredMode);
+      setLanguage(restoredLanguage);
 
       clearPendingAnalysis();
 
@@ -200,7 +234,7 @@ export function useTextAnalysis() {
       console.error("Error restoring analysis state:", error);
       clearPendingAnalysis();
     }
-  }, [pendingAnalysis, clearPendingAnalysis, setMode, state.hasRestored]);
+  }, [pendingAnalysis, clearPendingAnalysis, setMode, setLanguage, state.hasRestored]);
 
   useEffect(() => {
     checkQuota();
@@ -215,7 +249,7 @@ export function useTextAnalysis() {
   }, []);
 
   const analyzeText = useCallback(
-    async (mode: AnalysisMode) => {
+    async (mode: AnalysisMode, language: AnalysisLanguage) => {
       if (!state.text.trim()) {
         return;
       }
@@ -223,9 +257,15 @@ export function useTextAnalysis() {
       dispatch({ type: "ANALYZE_REQUEST" });
 
       try {
-        const requestBody: { text: string; mode: AnalysisMode; analysisContext?: string } = {
+        const requestBody: {
+          text: string;
+          mode: AnalysisMode;
+          language: AnalysisLanguage;
+          analysisContext?: string;
+        } = {
           text: state.text,
           mode,
+          language,
         };
 
         if (state.analysisContext.trim()) {
@@ -250,7 +290,7 @@ export function useTextAnalysis() {
             return;
           }
 
-          const errorMessage = mapErrorCodeToMessage(errorData);
+          const errorMessage = mapErrorCodeToMessage(errorData, t, locale);
 
           dispatch({ type: "ANALYZE_ERROR", error: errorMessage });
           return;
@@ -271,13 +311,13 @@ export function useTextAnalysis() {
               }
             : state.quota;
 
-        dispatch({ type: "ANALYZE_SUCCESS", result, quota: quotaFromHeaders ?? null });
+        dispatch({ type: "ANALYZE_SUCCESS", result, mode, language, quota: quotaFromHeaders ?? null });
       } catch (error) {
         console.error("Network error during text analysis:", error);
-        dispatch({ type: "ANALYZE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
+        dispatch({ type: "ANALYZE_ERROR", error: t("error.genericRetry") });
       }
     },
-    [state.text, state.analysisContext, state.quota]
+    [state.text, state.analysisContext, state.quota, t, locale]
   );
 
   const saveResult = useCallback(
@@ -303,7 +343,7 @@ export function useTextAnalysis() {
 
         if (!response.ok) {
           const errorData: ApiErrorResponse = await response.json();
-          const errorMessage = mapErrorCodeToMessage(errorData);
+          const errorMessage = mapErrorCodeToMessage(errorData, t, locale);
           dispatch({ type: "SAVE_ERROR", error: errorMessage });
           return;
         }
@@ -311,10 +351,10 @@ export function useTextAnalysis() {
         dispatch({ type: "SAVE_SUCCESS" });
       } catch (error) {
         console.error("Network error during save:", error);
-        dispatch({ type: "SAVE_ERROR", error: "Coś poszło nie tak. Spróbuj ponownie za chwilę." });
+        dispatch({ type: "SAVE_ERROR", error: t("error.genericRetry") });
       }
     },
-    [state.result]
+    [state.result, t, locale]
   );
 
   const clear = useCallback(() => {

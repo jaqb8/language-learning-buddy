@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,17 +6,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2, Lock } from "lucide-react";
-import { resetPasswordSchema, type ResetPasswordFormData } from "@/lib/validation/auth-schemas";
+import { createResetPasswordSchema, type ResetPasswordFormData } from "@/lib/validation/auth-schemas";
 import { useAuthActions } from "@/lib/hooks/useAuthActions";
+import { I18nProvider, useI18n, type AppLocale } from "@/lib/i18n";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ locale = "en" }: { locale?: AppLocale }) {
+  return (
+    <I18nProvider locale={locale}>
+      <ResetPasswordFormContent />
+    </I18nProvider>
+  );
+}
+
+function ResetPasswordFormContent() {
+  const { t } = useI18n();
+  const schema = useMemo(() => createResetPasswordSchema(t), [t]);
   const { resetPassword, isLoading } = useAuthActions();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
     mode: "onBlur",
   });
 
@@ -26,13 +38,13 @@ export function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Ustaw nowe hasło</CardTitle>
-        <CardDescription>Wprowadź nowe hasło dla swojego konta</CardDescription>
+        <CardTitle className="text-2xl font-bold">{t("auth.reset.title")}</CardTitle>
+        <CardDescription>{t("auth.reset.description")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Nowe hasło</Label>
+            <Label htmlFor="password">{t("auth.newPassword")}</Label>
             <Input
               id="password"
               type="password"
@@ -51,7 +63,7 @@ export function ResetPasswordForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Potwierdź nowe hasło</Label>
+            <Label htmlFor="confirmPassword">{t("auth.confirmNewPassword")}</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -74,11 +86,11 @@ export function ResetPasswordForm() {
           <Button type="submit" className="w-full" disabled={isLoading} size="lg" aria-busy={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="size-4 animate-spin" /> Resetowanie...
+                <Loader2 className="size-4 animate-spin" /> {t("auth.reset.submitting")}
               </>
             ) : (
               <>
-                <Lock className="size-4" /> Zresetuj hasło
+                <Lock className="size-4" /> {t("auth.reset.submit")}
               </>
             )}
           </Button>

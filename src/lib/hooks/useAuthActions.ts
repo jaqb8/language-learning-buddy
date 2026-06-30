@@ -8,15 +8,18 @@ import type {
   ForgotPasswordFormData,
   ResetPasswordFormData,
 } from "@/lib/validation/auth-schemas";
+import { useI18n } from "@/lib/i18n";
+import { mapAuthErrorCodeToMessage } from "@/lib/clients/auth/auth.errors";
 
 export function useAuthActions() {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
 
   const login = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
       await authClient.login(data);
-      toast.success("Zalogowano pomyślnie!");
+      toast.success(t("auth.toast.loginSuccess"));
 
       const urlParams = new URLSearchParams(window.location.search);
       const returnUrl = urlParams.get("returnUrl");
@@ -25,9 +28,9 @@ export function useAuthActions() {
       window.location.href = redirectUrl;
     } catch (error) {
       if (error instanceof AuthClientError) {
-        toast.error(error.message);
+        toast.error(mapAuthErrorCodeToMessage(error.code, t));
       } else {
-        toast.error("Wystąpił błąd połączenia. Spróbuj ponownie.");
+        toast.error(t("auth.toast.connectionError"));
       }
       throw error;
     } finally {
@@ -39,7 +42,7 @@ export function useAuthActions() {
     setIsLoading(true);
     try {
       await authClient.signup(data);
-      toast.success("Rejestracja pomyślna! Sprawdź swoją skrzynkę pocztową, aby potwierdzić adres email.", {
+      toast.success(t("auth.toast.signupSuccess"), {
         duration: 5000,
       });
       setTimeout(() => {
@@ -47,9 +50,9 @@ export function useAuthActions() {
       }, 2000);
     } catch (error) {
       if (error instanceof AuthClientError) {
-        toast.error(error.message);
+        toast.error(mapAuthErrorCodeToMessage(error.code, t));
       } else {
-        toast.error("Wystąpił błąd połączenia. Spróbuj ponownie.");
+        toast.error(t("auth.toast.connectionError"));
       }
       throw error;
     } finally {
@@ -61,13 +64,13 @@ export function useAuthActions() {
     setIsLoading(true);
     try {
       await authClient.forgotPassword(data);
-      toast.success("Jeśli konto istnieje, link do resetu hasła został wysłany na podany adres email.");
+      toast.success(t("auth.toast.forgotSuccess"));
       return true;
     } catch (error) {
       if (error instanceof AuthClientError) {
-        toast.error(error.message);
+        toast.error(mapAuthErrorCodeToMessage(error.code, t));
       } else {
-        toast.error("Wystąpił błąd połączenia. Spróbuj ponownie.");
+        toast.error(t("auth.toast.connectionError"));
       }
       return false;
     } finally {
@@ -79,15 +82,15 @@ export function useAuthActions() {
     setIsLoading(true);
     try {
       await authClient.resetPassword(data);
-      toast.success("Hasło zostało zmienione pomyślnie! Za chwilę zostaniesz przekierowany do strony głównej.");
+      toast.success(t("auth.toast.resetSuccess"));
       setTimeout(() => {
         window.location.href = "/login";
       }, 500);
     } catch (error) {
       if (error instanceof AuthClientError) {
-        toast.error(error.message);
+        toast.error(mapAuthErrorCodeToMessage(error.code, t));
       } else {
-        toast.error("Wystąpił błąd połączenia. Spróbuj ponownie.");
+        toast.error(t("auth.toast.connectionError"));
       }
       throw error;
     } finally {

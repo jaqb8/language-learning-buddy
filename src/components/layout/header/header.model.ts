@@ -69,7 +69,7 @@ export function buildHeaderVM({
       logo,
       menu: filteredMenu,
       auth: { kind: "hidden" },
-      showModeToggleDesktop: false,
+      showModeToggleDesktop: true,
     };
   }
 

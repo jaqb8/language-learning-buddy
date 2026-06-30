@@ -1,11 +1,17 @@
 import { z, type ZodSchema } from "zod";
-import type { AnalysisMode, TextAnalysisDto, AIModelConfig, AnalysisModeConfig } from "../../../types";
-import { ANALYSIS_MODES } from "../../../types";
-import { ANALYSIS_MODE_DEFINITIONS } from "@/lib/analysis-mode.constants";
+import type {
+  AnalysisLanguage,
+  AnalysisMode,
+  TextAnalysisDto,
+  AIModelConfig,
+  AnalysisModeConfig,
+} from "../../../types";
+import { ANALYSIS_LANGUAGES, ANALYSIS_MODES } from "../../../types";
 import grammarPrompt from "@/lib/prompts/grammar-analysis.prompt.md?raw";
 import colloquialPrompt from "@/lib/prompts/colloquial-speech.prompt.md?raw";
-import betaGrammarPrompt from "@/lib/prompts/beta-grammar-analysis.prompt.md?raw";
-import betaColloquialPrompt from "@/lib/prompts/beta-colloquial-speech.prompt.md?raw";
+import polishGrammarPrompt from "@/lib/prompts/polish-grammar-analysis.prompt.md?raw";
+import polishColloquialPrompt from "@/lib/prompts/polish-colloquial-speech.prompt.md?raw";
+import { DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
 
 const TextAnalysisSchema = z.discriminatedUnion("is_correct", [
   z.object({
@@ -24,16 +30,43 @@ const TextAnalysisSchema = z.discriminatedUnion("is_correct", [
   }),
 ]) as ZodSchema<TextAnalysisDto>;
 
-const PROMPTS: Record<AnalysisMode, string> = {
-  [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: grammarPrompt,
-  [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: colloquialPrompt,
-  [ANALYSIS_MODES.BETA_GRAMMAR_AND_SPELLING]: betaGrammarPrompt,
-  [ANALYSIS_MODES.BETA_COLLOQUIAL_SPEECH]: betaColloquialPrompt,
+const PROMPTS: Record<AnalysisLanguage, Record<AnalysisMode, string>> = {
+  [ANALYSIS_LANGUAGES.ENGLISH]: {
+    [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: grammarPrompt,
+    [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: colloquialPrompt,
+  },
+  [ANALYSIS_LANGUAGES.POLISH]: {
+    [ANALYSIS_MODES.GRAMMAR_AND_SPELLING]: polishGrammarPrompt,
+    [ANALYSIS_MODES.COLLOQUIAL_SPEECH]: polishColloquialPrompt,
+  },
 };
 
 const ANALYSIS_MODE_CONFIGS = Object.fromEntries(
-  ANALYSIS_MODE_DEFINITIONS.map((mode) => [mode.value, { prompt: PROMPTS[mode.value], schema: TextAnalysisSchema }])
-) as Record<AnalysisMode, AnalysisModeConfig>;
+  Object.entries(PROMPTS).map(([language, prompts]) => [
+    language,
+    Object.fromEntries(Object.entries(prompts).map(([mode, prompt]) => [mode, { prompt, schema: TextAnalysisSchema }])),
+  ])
+) as Record<AnalysisLanguage, Record<AnalysisMode, AnalysisModeConfig>>;
+
+function localizeExplanationPrompt(prompt: string, explanationLocale: AppLocale): string {
+  const values =
+    explanationLocale === "pl"
+      ? {
+          instruction: "`explanation` musi być napisane w całości po polsku.",
+          markdownLabel: "Markdown po POLSKU",
+          example: "POLSKIE_WYJAŚNIENIE",
+        }
+      : {
+          instruction: "`explanation` musi być napisane w całości po angielsku.",
+          markdownLabel: "Markdown po ANGIELSKU",
+          example: "ANGIELSKIE_WYJAŚNIENIE",
+        };
+
+  return prompt
+    .replaceAll("{{EXPLANATION_INSTRUCTION}}", values.instruction)
+    .replaceAll("{{EXPLANATION_MARKDOWN_LABEL}}", values.markdownLabel)
+    .replaceAll("{{EXPLANATION_EXAMPLE}}", values.example);
+}
 
 /**
  * Service for managing AI configuration.
@@ -93,23 +126,31 @@ export class AIConfigService {
    * Returns the configuration for a specific analysis mode.
    * @param mode - The analysis mode
    */
-  getAnalysisModeConfig(mode: AnalysisMode): AnalysisModeConfig {
-    return ANALYSIS_MODE_CONFIGS[mode];
+  getAnalysisModeConfig(
+    mode: AnalysisMode,
+    language: AnalysisLanguage,
+    explanationLocale: AppLocale = DEFAULT_APP_LOCALE
+  ): AnalysisModeConfig {
+    const config = ANALYSIS_MODE_CONFIGS[language][mode];
+    return {
+      ...config,
+      prompt: localizeExplanationPrompt(config.prompt, explanationLocale),
+    };
   }
 
   /**
    * Returns the prompt for a specific analysis mode.
    * @param mode - The analysis mode
    */
-  getPrompt(mode: AnalysisMode): string {
-    return ANALYSIS_MODE_CONFIGS[mode].prompt;
+  getPrompt(mode: AnalysisMode, language: AnalysisLanguage, explanationLocale: AppLocale = DEFAULT_APP_LOCALE): string {
+    return this.getAnalysisModeConfig(mode, language, explanationLocale).prompt;
   }
 
   /**
    * Returns the response schema for a specific analysis mode.
    * @param mode - The analysis mode
    */
-  getResponseSchema(mode: AnalysisMode): ZodSchema<TextAnalysisDto> {
-    return ANALYSIS_MODE_CONFIGS[mode].schema;
+  getResponseSchema(mode: AnalysisMode, language: AnalysisLanguage): ZodSchema<TextAnalysisDto> {
+    return this.getAnalysisModeConfig(mode, language).schema;
   }
 }

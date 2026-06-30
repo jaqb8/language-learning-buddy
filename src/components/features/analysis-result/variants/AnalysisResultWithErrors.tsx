@@ -6,6 +6,7 @@ import type { AnalysisMode } from "@/types";
 import type { SaveCtaModel } from "../analysisResult.model";
 import { SaveToLearningListButton } from "../components/SaveToLearningListButton";
 import { EarnedPointBadge } from "../components/EarnedPointBadge";
+import { useI18n } from "@/lib/i18n";
 
 interface AnalysisResultWithErrorsProps {
   analysisMode: AnalysisMode;
@@ -30,11 +31,12 @@ export function AnalysisResultWithErrors({
   showGamificationBetaTag,
   onSaveClick,
 }: AnalysisResultWithErrorsProps) {
+  const { t } = useI18n();
   return (
-    <Card role="article" aria-label="Wynik analizy - znaleziono błędy" data-test-id="analysis-result-with-errors">
+    <Card role="article" aria-label={t("analysis.result.errorsAria")} data-test-id="analysis-result-with-errors">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Wynik analizy</h2>
+          <h2 className="text-lg font-semibold">{t("analysis.result.title")}</h2>
           <AnalysisModeBadge mode={analysisMode} className="text-xs" />
         </CardTitle>
       </CardHeader>
@@ -46,7 +48,7 @@ export function AnalysisResultWithErrors({
         />
 
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold px-2">Wyjaśnienie:</h3>
+          <h3 className="text-sm font-semibold px-2">{t("analysis.result.explanation")}</h3>
           <div
             className="rounded-md bg-muted p-3 text-sm leading-relaxed markdown-content"
             data-test-id="analysis-explanation"

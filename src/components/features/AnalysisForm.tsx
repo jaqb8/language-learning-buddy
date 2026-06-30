@@ -5,10 +5,13 @@ import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Brain, Loader2, Copy, Check } from "lucide-react";
 import { AnalysisModeSelector } from "./AnalysisModeSelector";
+import { AnalysisLanguageSelector } from "./AnalysisLanguageSelector";
 import { AnalysisContextInput } from "./AnalysisContextInput";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useSettingsStore } from "@/lib/stores/settings.store";
+import type { AnalysisLanguage } from "@/types";
+import { useI18n } from "@/lib/i18n";
 
 interface QuotaStatus {
   remaining: number;
@@ -29,6 +32,7 @@ interface AnalysisFormProps {
   analysisContext?: string;
   onAnalysisContextChange?: (analysisContext: string) => void;
   isAuth?: boolean;
+  language: AnalysisLanguage;
 }
 
 export function AnalysisForm({
@@ -44,7 +48,9 @@ export function AnalysisForm({
   analysisContext = "",
   onAnalysisContextChange,
   isAuth = false,
+  language,
 }: AnalysisFormProps) {
+  const { t } = useI18n();
   const formRef = useRef<HTMLFormElement>(null);
   const [copied, setCopied] = useState(false);
   const [modifierKey, setModifierKey] = useState("Ctrl");
@@ -63,7 +69,6 @@ export function AnalysisForm({
   const isClearDisabled = isLoading || isAnalyzing || !hasText;
   const isContextTriggerDisabled = isAnalyzing || isQuotaExceeded;
   const isContextTextareaDisabled = isAnalyzing || isQuotaExceeded || !hasText;
-
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       onTextChange(e.target.value);
@@ -85,15 +90,15 @@ export function AnalysisForm({
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success("Skopiowano do schowka!");
+      toast.success(t("analysis.copySuccess"));
       setTimeout(() => {
         setCopied(false);
       }, 2000);
     } catch (error) {
       console.error("Failed to copy text:", error);
-      toast.error("Nie udało się skopiować tekstu");
+      toast.error(t("analysis.copyError"));
     }
-  }, [text]);
+  }, [text, t]);
 
   const handleClearClick = useCallback(() => {
     onClear();
@@ -122,16 +127,16 @@ export function AnalysisForm({
   }, [isDisabled, onSubmit, isClearDisabled, handleClearClick]);
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" aria-label="Formularz analizy tekstu">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4" aria-label={t("analysis.formAria")}>
       <div className="space-y-2">
         <label htmlFor="text-input" className="block text-md font-semibold">
-          Wprowadź tekst do analizy
+          {t("analysis.inputLabel")}
         </label>
         <Textarea
           id="text-input"
           value={text}
           onChange={handleTextChange}
-          placeholder="Wpisz tutaj swój tekst w języku angielskim..."
+          placeholder={t(language === "pl" ? "analysis.placeholder.pl" : "analysis.placeholder.en")}
           disabled={isAnalyzing || isQuotaExceeded}
           rows={8}
           className="text-lg md:text-lg"
@@ -152,8 +157,8 @@ export function AnalysisForm({
               text.trim().length === 0 && text.length === 0 && "text-muted-foreground"
             )}
           >
-            {isOverLimit && "Przekroczono limit znaków. "}
-            {text.trim().length === 0 && text.length === 0 && "Pole nie może być puste."}
+            {isOverLimit && t("analysis.limitExceeded")}
+            {text.trim().length === 0 && text.length === 0 && t("analysis.empty")}
           </p>
           <div className="flex items-center gap-2">
             {hasText && (
@@ -163,7 +168,7 @@ export function AnalysisForm({
                 size="icon"
                 onClick={handleCopy}
                 className="h-7 w-7"
-                aria-label="Kopiuj tekst do schowka"
+                aria-label={t("analysis.copy")}
                 data-test-id="copy-text-button"
               >
                 {copied ? (
@@ -192,16 +197,18 @@ export function AnalysisForm({
             inputDisabled={isContextTextareaDisabled}
           />
         )}
-        <AnalysisModeSelector disabled={isQuotaExceeded} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AnalysisLanguageSelector disabled={isQuotaExceeded || isAnalyzing} />
+          <AnalysisModeSelector disabled={isQuotaExceeded || isAnalyzing} />
+        </div>
       </div>
 
       {quota && quota.remaining === 0 && (
         <Alert variant="destructive">
-          <AlertTitle>Przekroczono dzienny limit analiz</AlertTitle>
+          <AlertTitle>{t("analysis.dailyLimitTitle")}</AlertTitle>
           <AlertDescription>
             <p>
-              Przekroczono dzienny limit {quota.limit} analiz dla niezalogowanych użytkowników. Limit zostanie
-              zresetowany {formatResetTime(quota.resetAt)}.{" "}
+              {t("analysis.dailyLimit", { limit: quota.limit, resetAt: formatResetTime(quota.resetAt) })}{" "}
               <a
                 href="/login"
                 onClick={(e) => {
@@ -215,7 +222,7 @@ export function AnalysisForm({
                   "text-destructive hover:text-destructive/80"
                 )}
               >
-                Zaloguj się, aby uzyskać nielimitowany dostęp do analizy tekstu.
+                {t("analysis.dailyLimitLogin")}
               </a>
             </p>
           </AlertDescription>
@@ -233,11 +240,11 @@ export function AnalysisForm({
         >
           {isAnalyzing ? (
             <>
-              <Loader2 className="size-4 animate-spin" /> Analizuję...
+              <Loader2 className="size-4 animate-spin" /> {t("analysis.submitting")}
             </>
           ) : (
             <>
-              <Brain className="size-4" /> Analizuj tekst
+              <Brain className="size-4" /> {t("analysis.submit")}
               <KbdGroup className="ml-2 hidden sm:inline-flex">
                 <Kbd>{modifierKey}</Kbd>
                 <Kbd>Enter</Kbd>
@@ -252,10 +259,10 @@ export function AnalysisForm({
           variant="outline"
           className="w-full text-lg"
           size="lg"
-          aria-label="Wyczyść formularz i zacznij od nowa"
+          aria-label={t("analysis.clearAria")}
           data-test-id="analysis-clear-button"
         >
-          Wyczyść
+          {t("analysis.clear")}
           <KbdGroup className="ml-2 hidden sm:inline-flex">
             <Kbd>{modifierKey}</Kbd>
             <Kbd>Del</Kbd>

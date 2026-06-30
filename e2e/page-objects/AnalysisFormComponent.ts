@@ -7,21 +7,30 @@ export class AnalysisFormComponent {
   readonly clearButton: Locator;
   readonly charCount: Locator;
   readonly modeSelector: Locator;
+  readonly languageSelector: Locator;
   readonly grammarModeOption: Locator;
   readonly colloquialModeOption: Locator;
+  readonly analyzeView: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.textInput = page.locator("[data-test-id='analysis-text-input']");
-    this.submitButton = page.getByRole("button", { name: /analizuj tekst/i });
-    this.clearButton = page.getByRole("button", { name: /wyczyść/i });
+    this.submitButton = page.getByRole("button", { name: /(analizuj tekst|analyse text)/i });
+    this.clearButton = page.getByRole("button", { name: /(wyczyść|clear)/i });
     this.charCount = page.locator("#char-count");
     this.modeSelector = page.locator("[data-test-id='analysis-mode-selector']");
+    this.languageSelector = page.locator("[data-test-id='analysis-language-selector']");
     this.grammarModeOption = page.locator("[data-test-id='mode-grammar']");
     this.colloquialModeOption = page.locator("[data-test-id='mode-colloquial']");
+    this.analyzeView = page.getByTestId("analyze-view");
+  }
+
+  async waitForHydration() {
+    await expect(this.analyzeView).toHaveAttribute("data-hydrated", "true");
   }
 
   async fillText(text: string) {
+    await this.waitForHydration();
     await this.textInput.waitFor({ state: "visible" });
     await expect(this.textInput).toBeEnabled();
     await this.textInput.clear();
@@ -31,15 +40,18 @@ export class AnalysisFormComponent {
       await this.textInput.fill(text);
     }
     await expect(this.textInput).toHaveValue(text);
+    await expect(this.charCount).toContainText(`${text.length} /`);
   }
 
   async submitAnalysis() {
+    await this.waitForHydration();
     await this.submitButton.waitFor({ state: "visible" });
     await expect(this.submitButton).toBeEnabled({ timeout: 10000 });
     await this.submitButton.click();
   }
 
   async clearForm() {
+    await this.waitForHydration();
     await this.clearButton.click();
   }
 
@@ -52,21 +64,23 @@ export class AnalysisFormComponent {
   }
 
   async waitForAnalyzing() {
-    await this.submitButton.getByText(/analizuję/i).waitFor();
+    await this.submitButton.getByText(/(analizuję|analysing)/i).waitFor();
   }
 
   async selectMode(mode: "grammar" | "colloquial") {
+    await this.waitForHydration();
     const currentMode = await this.getSelectedMode();
-    const modeLabel = mode === "grammar" ? "Gramatyka i ortografia" : "Mowa potoczna";
+    const modeLabels =
+      mode === "grammar" ? ["Gramatyka i ortografia", "Grammar and spelling"] : ["Mowa potoczna", "Colloquial speech"];
 
-    if (currentMode?.includes(modeLabel)) {
+    if (modeLabels.some((label) => currentMode?.includes(label))) {
       return;
     }
 
     const modeTestId = mode === "grammar" ? "mode-grammar" : "mode-colloquial";
     const modeOption = this.page
       .locator(`[data-test-id="${modeTestId}"]`)
-      .or(this.page.getByRole("option", { name: new RegExp(modeLabel, "i") }));
+      .or(this.page.getByRole("option", { name: new RegExp(modeLabels.join("|"), "i") }));
 
     await this.modeSelector.waitFor({ state: "visible" });
     await expect(this.modeSelector).toBeEnabled();
@@ -80,10 +94,29 @@ export class AnalysisFormComponent {
     }
 
     await modeOption.click();
-    await expect(this.modeSelector).toContainText(modeLabel);
+    await expect(this.modeSelector).toContainText(new RegExp(modeLabels.join("|"), "i"));
   }
 
   async getSelectedMode() {
+    await this.waitForHydration();
     return await this.modeSelector.textContent();
+  }
+
+  async selectLanguage(language: "en" | "pl") {
+    await this.waitForHydration();
+    const labels = language === "en" ? ["Angielski", "English"] : ["Polski", "Polish"];
+    const selectedLanguage = await this.getSelectedLanguage();
+    if (labels.some((label) => selectedLanguage?.includes(label))) {
+      return;
+    }
+
+    await this.languageSelector.click();
+    await this.page.locator(`[data-test-id="${language === "en" ? "language-english" : "language-polish"}"]`).click();
+    await expect(this.languageSelector).toContainText(new RegExp(labels.join("|"), "i"));
+  }
+
+  async getSelectedLanguage() {
+    await this.waitForHydration();
+    return await this.languageSelector.textContent();
   }
 }

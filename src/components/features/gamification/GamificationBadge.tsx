@@ -3,6 +3,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { GamificationBadgeButton } from "./GamificationBadgeButton";
 import { GamificationBadgeSheet } from "./GamificationBadgeSheet";
 import { buildGamificationBadgeVM } from "./gamificationBadge.model";
+import { useI18n } from "@/lib/i18n";
 
 interface GamificationBadgeProps {
   correctAnalyses?: number;
@@ -17,9 +18,10 @@ export function GamificationBadge({
   showBeta = false,
   isLoading = false,
 }: GamificationBadgeProps) {
+  const { t } = useI18n();
   const vm = useMemo(
-    () => buildGamificationBadgeVM({ correctAnalyses, totalAnalyses, showBeta }),
-    [correctAnalyses, totalAnalyses, showBeta]
+    () => buildGamificationBadgeVM({ correctAnalyses, totalAnalyses, showBeta, t }),
+    [correctAnalyses, totalAnalyses, showBeta, t]
   );
 
   if (!vm && !isLoading) {

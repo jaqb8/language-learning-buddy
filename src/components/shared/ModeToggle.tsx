@@ -2,9 +2,12 @@ import { Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { createTranslator, useI18n, type AppLocale } from "@/lib/i18n";
 
-export function ModeToggle({ children }: { children?: React.ReactNode }) {
+export function ModeToggle({ children, locale }: { children?: React.ReactNode; locale?: AppLocale }) {
   const { toggleTheme } = useTheme();
+  const context = useI18n();
+  const t = locale ? createTranslator(locale) : context.t;
 
   return (
     <Button
@@ -18,7 +21,7 @@ export function ModeToggle({ children }: { children?: React.ReactNode }) {
         <>
           <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">Przełącz motyw</span>
+          <span className="sr-only">{t("theme.toggle")}</span>
         </>
       ) : (
         <>

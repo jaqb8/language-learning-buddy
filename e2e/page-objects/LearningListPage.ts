@@ -11,20 +11,22 @@ export class LearningListPage {
   readonly paginationNext: Locator;
   readonly paginationPrevious: Locator;
   readonly modeBadges: Locator;
+  readonly languageBadges: Locator;
   readonly itemCards: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole("heading", { name: /lista wyrażeń do nauki/i });
-    this.emptyState = page.getByText(/brak wyrażeń do nauki/i);
+    this.heading = page.getByRole("heading", { name: /(lista wyrażeń do nauki|learning phrases)/i });
+    this.emptyState = page.getByText(/(brak wyrażeń do nauki|no phrases to learn)/i);
     this.learningItems = page.locator("[data-learning-item]");
-    this.deleteButtons = page.getByRole("button", { name: /usuń/i });
-    this.confirmDeleteButton = page.getByRole("button", { name: /tak, usuń/i });
-    this.cancelDeleteButton = page.getByRole("button", { name: /anuluj/i });
-    this.paginationNext = page.getByRole("button", { name: /następna/i });
-    this.paginationPrevious = page.getByRole("button", { name: /poprzednia/i });
+    this.deleteButtons = page.getByRole("button", { name: /(usuń|delete)/i });
+    this.confirmDeleteButton = page.getByRole("button", { name: /(potwierdź|confirm)/i });
+    this.cancelDeleteButton = page.getByRole("button", { name: /(anuluj|cancel)/i });
+    this.paginationNext = page.getByRole("button", { name: /(następna|next)/i });
+    this.paginationPrevious = page.getByRole("button", { name: /(poprzednia|previous)/i });
     this.itemCards = page.getByTestId("learning-item-card");
     this.modeBadges = this.itemCards.getByTestId("analysis-mode-badge");
+    this.languageBadges = this.itemCards.getByTestId("analysis-language-badge");
   }
 
   async goto() {
@@ -69,6 +71,12 @@ export class LearningListPage {
 
   async getItemModeBadge(index: number) {
     const badge = this.itemCards.nth(index).getByTestId("analysis-mode-badge");
+    await badge.waitFor({ state: "visible" });
+    return await badge.textContent();
+  }
+
+  async getFirstItemLanguageBadge() {
+    const badge = this.itemCards.first().getByTestId("analysis-language-badge");
     await badge.waitFor({ state: "visible" });
     return await badge.textContent();
   }

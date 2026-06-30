@@ -13,8 +13,8 @@ export class LoginPage {
     this.emailInput = page.locator("#email");
     this.passwordInput = page.locator("#password");
     this.submitButton = page.locator('[data-test-id="login-submit-button"]');
-    this.forgotPasswordLink = page.getByRole("link", { name: /zapomniałeś hasła/i });
-    this.signupLink = page.getByRole("link", { name: /zarejestruj się/i });
+    this.forgotPasswordLink = page.getByRole("link", { name: /(zapomniałeś hasła|forgot your password)/i });
+    this.signupLink = page.getByRole("link", { name: /(zarejestruj się|sign up)/i });
   }
 
   async goto() {

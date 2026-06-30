@@ -1,40 +1,62 @@
 import { z } from "zod";
+import { createTranslator, type Translator } from "@/lib/i18n";
 
-export const emailSchema = z.string().min(1, "Email jest wymagany").email("Nieprawidłowy format email");
+function createEmailSchema(t: Translator) {
+  return z.string().min(1, t("auth.validation.emailRequired")).email(t("auth.validation.emailInvalid"));
+}
 
-export const passwordSchema = z.string().min(1, "Hasło jest wymagane").min(6, "Hasło musi mieć co najmniej 6 znaków");
+function createPasswordSchema(t: Translator) {
+  return z.string().min(1, t("auth.validation.passwordRequired")).min(6, t("auth.validation.passwordLength"));
+}
 
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-});
-
-export const signupSchema = z
-  .object({
-    email: emailSchema,
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Hasła muszą być identyczne",
-    path: ["confirmPassword"],
+export function createLoginSchema(t: Translator) {
+  return z.object({
+    email: createEmailSchema(t),
+    password: createPasswordSchema(t),
   });
+}
 
-export const forgotPasswordSchema = z.object({
-  email: emailSchema,
-});
+export function createSignupSchema(t: Translator) {
+  return z
+    .object({
+      email: createEmailSchema(t),
+      password: createPasswordSchema(t),
+      confirmPassword: z.string().min(1, t("auth.validation.confirmRequired")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth.validation.passwordMismatch"),
+      path: ["confirmPassword"],
+    });
+}
 
-export const resetPasswordSchema = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Potwierdzenie hasła jest wymagane"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Hasła nie są identyczne",
-    path: ["confirmPassword"],
+export function createForgotPasswordSchema(t: Translator) {
+  return z.object({
+    email: createEmailSchema(t),
   });
+}
 
-export type LoginFormData = z.infer<typeof loginSchema>;
-export type SignupFormData = z.infer<typeof signupSchema>;
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
-export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+export function createResetPasswordSchema(t: Translator) {
+  return z
+    .object({
+      password: createPasswordSchema(t),
+      confirmPassword: z.string().min(1, t("auth.validation.confirmRequired")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth.validation.passwordMismatch"),
+      path: ["confirmPassword"],
+    });
+}
+
+const defaultTranslator = createTranslator("en");
+
+export const emailSchema = createEmailSchema(defaultTranslator);
+export const passwordSchema = createPasswordSchema(defaultTranslator);
+export const loginSchema = createLoginSchema(defaultTranslator);
+export const signupSchema = createSignupSchema(defaultTranslator);
+export const forgotPasswordSchema = createForgotPasswordSchema(defaultTranslator);
+export const resetPasswordSchema = createResetPasswordSchema(defaultTranslator);
+
+export type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>;
+export type SignupFormData = z.infer<ReturnType<typeof createSignupSchema>>;
+export type ForgotPasswordFormData = z.infer<ReturnType<typeof createForgotPasswordSchema>>;
+export type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema>>;

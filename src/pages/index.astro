@@ -1,8 +1,12 @@
 ---
 import AppLayout from "../layouts/AppLayout.astro";
 import { AnalyzeView } from "../components/views/AnalyzeView";
+import { createTranslator } from "@/lib/i18n";
+
+const { locale } = Astro.locals;
+const t = createTranslator(locale);
 ---
 
-<AppLayout title="Analiza tekstu - Language Learning Buddy">
-  <AnalyzeView client:load />
+<AppLayout title={t("page.analyze.title")}>
+  <AnalyzeView locale={locale} client:load />
 </AppLayout>

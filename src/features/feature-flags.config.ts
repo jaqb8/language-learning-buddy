@@ -1,4 +1,4 @@
-export type Feature = "auth" | "learning-items" | "gamification" | "analysis-modes-beta";
+export type Feature = "auth" | "learning-items" | "gamification";
 export type Environment = "local" | "integration" | "production";
 
 interface FeatureConfig {
@@ -11,19 +11,16 @@ const featureFlagsConfig: Record<Environment, Record<Feature, FeatureConfig>> = 
     auth: { enabled: true },
     "learning-items": { enabled: true },
     gamification: { enabled: true, beta: false },
-    "analysis-modes-beta": { enabled: true, beta: true },
   },
   integration: {
     auth: { enabled: true },
     "learning-items": { enabled: true },
     gamification: { enabled: true, beta: false },
-    "analysis-modes-beta": { enabled: true, beta: true },
   },
   production: {
     auth: { enabled: true },
     "learning-items": { enabled: true },
     gamification: { enabled: true, beta: false },
-    "analysis-modes-beta": { enabled: true, beta: true },
   },
 };
 

@@ -37,12 +37,10 @@ describe("feature-flags.service", () => {
         const authEnabled = isFeatureEnabled("auth");
         const learningItemsEnabled = isFeatureEnabled("learning-items");
         const gamificationEnabled = isFeatureEnabled("gamification");
-        const analysisModesBetaEnabled = isFeatureEnabled("analysis-modes-beta");
 
         expect(authEnabled).toBe(featureFlagsConfig.local.auth.enabled);
         expect(learningItemsEnabled).toBe(featureFlagsConfig.local["learning-items"].enabled);
         expect(gamificationEnabled).toBe(featureFlagsConfig.local.gamification.enabled);
-        expect(analysisModesBetaEnabled).toBe(featureFlagsConfig.local["analysis-modes-beta"].enabled);
       });
     });
 
@@ -93,12 +91,6 @@ describe("feature-flags.service", () => {
 
   describe("isFeatureBeta", () => {
     describe("configuration reading", () => {
-      it("should return true for features marked as beta", () => {
-        __setEnv("local");
-        const betaModesBeta = isFeatureBeta("analysis-modes-beta");
-        expect(betaModesBeta).toBe(featureFlagsConfig.local["analysis-modes-beta"].beta);
-      });
-
       it("should return false for features not marked as beta", () => {
         __setEnv("local");
         const authBeta = isFeatureBeta("auth");
@@ -107,8 +99,8 @@ describe("feature-flags.service", () => {
 
       it("should work across different environments", () => {
         __setEnv("production");
-        const betaModesBeta = isFeatureBeta("analysis-modes-beta");
-        expect(betaModesBeta).toBe(featureFlagsConfig.production["analysis-modes-beta"].beta);
+        const gamificationBeta = isFeatureBeta("gamification");
+        expect(gamificationBeta).toBe(featureFlagsConfig.production.gamification.beta);
       });
     });
 
@@ -117,7 +109,7 @@ describe("feature-flags.service", () => {
         __setEnv("production");
         vi.spyOn(featureFlagsConfig, "production", "get").mockReturnValue(undefined as never);
 
-        const result = isFeatureBeta("analysis-modes-beta");
+        const result = isFeatureBeta("gamification");
         expect(result).toBe(false);
 
         vi.restoreAllMocks();
@@ -126,10 +118,10 @@ describe("feature-flags.service", () => {
       it("should return false when feature is not defined in config", () => {
         __setEnv("local");
         const config = { ...featureFlagsConfig.local };
-        delete (config as Record<string, unknown>)["analysis-modes-beta"];
+        delete (config as Record<string, unknown>).gamification;
         vi.spyOn(featureFlagsConfig, "local", "get").mockReturnValue(config as typeof featureFlagsConfig.local);
 
-        const result = isFeatureBeta("analysis-modes-beta");
+        const result = isFeatureBeta("gamification");
         expect(result).toBe(false);
 
         vi.restoreAllMocks();
