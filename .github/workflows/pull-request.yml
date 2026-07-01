@@ -82,6 +82,9 @@ jobs:
         run: |
           echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.test
           echo "SUPABASE_PUBLIC_KEY=${{ secrets.SUPABASE_PUBLIC_KEY }}" >> .env.test
+          echo "SUPABASE_SECRET_KEY=${{ secrets.SUPABASE_SECRET_KEY }}" >> .env.test
+          echo "DATA_ENCRYPTION_KEY_V1=${{ secrets.DATA_ENCRYPTION_KEY_V1 }}" >> .env.test
+          echo "CACHE_HMAC_KEY_V1=${{ secrets.CACHE_HMAC_KEY_V1 }}" >> .env.test
           echo "USE_MOCKS=${{ vars.USE_MOCKS }}" >> .env.test
           echo "E2E_USERNAME=${{ secrets.E2E_USERNAME }}" >> .env.test
           echo "E2E_PASSWORD=${{ secrets.E2E_PASSWORD }}" >> .env.test
