@@ -17,6 +17,7 @@ import { createErrorResponse, createValidationErrorResponse } from "@/lib/api-he
 import { isValidAnalysisLanguage, isValidAnalysisMode } from "@/lib/analysis-mode.constants";
 import { isGamificationSuccess } from "@/lib/analysis-gamification";
 import type { AnalysisLanguage, AnalysisMode } from "@/types";
+import { createAnalysisCacheService } from "@/lib/services/analysis/analysis-cache.factory";
 
 export const prerender = false;
 
@@ -56,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { text, mode, language, analysisContext } = validationResult.data;
 
     const aiProvider = new OpenRouterAIProvider(openRouterService);
-    const result = await new AnalysisService(aiProvider, locals.supabase).analyzeText(
+    const result = await new AnalysisService(aiProvider, createAnalysisCacheService()).analyzeText(
       text,
       mode,
       language,

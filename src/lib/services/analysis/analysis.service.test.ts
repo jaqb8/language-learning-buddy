@@ -154,16 +154,17 @@ describe("AnalysisService - cache integration", () => {
   });
 
   it("should skip cache when analysisContext is provided", async () => {
-    const mockSupabase = {
-      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    const mockCache = {
+      get: vi.fn(),
+      set: vi.fn(),
     };
-    const service = new AnalysisService(mockProvider, mockSupabase as never);
+    const service = new AnalysisService(mockProvider, mockCache as never);
 
     mockProvider.analyzeText.mockResolvedValue(mockResponse);
 
     await service.analyzeText("I am a student.", "grammar_and_spelling", "en", "Piszę email do mojego szefa");
 
-    expect(mockSupabase.rpc).not.toHaveBeenCalled();
+    expect(mockCache.get).not.toHaveBeenCalled();
     expect(mockProvider.analyzeText).toHaveBeenCalledTimes(1);
   });
 
@@ -176,10 +177,11 @@ describe("AnalysisService - cache integration", () => {
       explanation: "Subject-verb agreement.",
       translation: null,
     };
-    const mockSupabase = {
-      rpc: vi.fn().mockResolvedValue({ data: cachedResult, error: null }),
+    const mockCache = {
+      get: vi.fn().mockResolvedValue(cachedResult),
+      set: vi.fn(),
     };
-    const service = new AnalysisService(mockProvider, mockSupabase as never);
+    const service = new AnalysisService(mockProvider, mockCache as never);
 
     const result = await service.analyzeText("I are student", "grammar_and_spelling", "en");
 
@@ -196,10 +198,11 @@ describe("AnalysisService - cache integration", () => {
       explanation: "Brakuje wykrzyknika na końcu.",
       translation: "Yo, ziom!",
     };
-    const mockSupabase = {
-      rpc: vi.fn().mockResolvedValue({ data: cachedResult, error: null }),
+    const mockCache = {
+      get: vi.fn().mockResolvedValue(cachedResult),
+      set: vi.fn(),
     };
-    const service = new AnalysisService(mockProvider, mockSupabase as never);
+    const service = new AnalysisService(mockProvider, mockCache as never);
 
     const result = await service.analyzeText("Yo, bro!", "grammar_and_spelling", "en");
 

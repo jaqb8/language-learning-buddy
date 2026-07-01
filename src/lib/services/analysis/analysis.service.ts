@@ -1,7 +1,6 @@
 import type { AIProvider, AnalysisLanguage, AnalysisMode, TextAnalysisDto } from "../../../types";
 import { getMockAnalysis } from "./analysis.mocks";
-import type { SupabaseClient } from "../../../db/supabase.client";
-import { AnalysisCacheService } from "./analysis-cache.service";
+import type { AnalysisCacheService } from "./analysis-cache.service";
 import { USE_MOCKS } from "astro:env/server";
 import { normalizeAnalysisResult } from "@/lib/analysis-gamification";
 import { DEFAULT_APP_LOCALE, type AppLocale } from "@/lib/i18n";
@@ -12,10 +11,10 @@ export class AnalysisService {
 
   constructor(
     private readonly aiProvider: AIProvider,
-    supabase?: SupabaseClient
+    cacheService?: AnalysisCacheService
   ) {
     this.useMocks = USE_MOCKS;
-    this.cacheService = supabase ? new AnalysisCacheService(supabase) : undefined;
+    this.cacheService = cacheService;
   }
 
   async analyzeText(
