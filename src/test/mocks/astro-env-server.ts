@@ -4,5 +4,8 @@ export const ASTRO_SITE = "http://localhost:3000";
 export const APP_NAME = "Language Learning Buddy Test";
 export const SUPABASE_URL = "http://localhost:54321";
 export const SUPABASE_PUBLIC_KEY = "mock-supabase-key";
+export const SUPABASE_SECRET_KEY = "mock-supabase-secret-key";
+export const DATA_ENCRYPTION_KEY_V1 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+export const CACHE_HMAC_KEY_V1 = "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=";
 export const ANONYMOUS_DAILY_QUOTA = 10;
 export const ANONYMOUS_IP_SALT = "mock-ip-salt";

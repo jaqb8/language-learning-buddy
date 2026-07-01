@@ -1,6 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { webcrypto } from "node:crypto";
 import { LearningItemsService } from "./learning-items.service";
 import { LearningItemsDatabaseError } from "./learning-items.errors";
+import { SensitiveDataCrypto } from "@/lib/crypto/sensitive-data.crypto";
+
+const ENCRYPTION_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+function createLegacyRow(id: string, createdAt: string) {
+  return {
+    id,
+    user_id: "user-123",
+    original_sentence: `test${id}`,
+    corrected_sentence: `test${id}`,
+    explanation: `test${id}`,
+    analysis_mode: "grammar_and_spelling",
+    analysis_language: "en",
+    translation: null,
+    created_at: createdAt,
+    encrypted_payload: null,
+  };
+}
 
 // Mock Supabase client
 const mockSupabase = {
@@ -13,6 +32,7 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(globalThis, "crypto", { value: webcrypto, configurable: true });
     callCounter = { count: 0 };
     service = new LearningItemsService(mockSupabase as any);
   });
@@ -52,7 +72,7 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
         return {
           select: vi.fn().mockImplementation((fields) => {
             // Data query: first arg is a string with comma-separated field names
-            if (typeof fields === "string" && fields.includes("id") && fields.includes("original_sentence")) {
+            if (fields === "*") {
               return {
                 eq: vi.fn().mockReturnValue({
                   order: vi.fn().mockReturnValue({
@@ -77,41 +97,11 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
       const totalItems = 12;
 
       const mockData = [
-        {
-          id: "1",
-          original_sentence: "test1",
-          corrected_sentence: "test1",
-          explanation: "test1",
-          created_at: "2023-01-01",
-        },
-        {
-          id: "2",
-          original_sentence: "test2",
-          corrected_sentence: "test2",
-          explanation: "test2",
-          created_at: "2023-01-02",
-        },
-        {
-          id: "3",
-          original_sentence: "test3",
-          corrected_sentence: "test3",
-          explanation: "test3",
-          created_at: "2023-01-03",
-        },
-        {
-          id: "4",
-          original_sentence: "test4",
-          corrected_sentence: "test4",
-          explanation: "test4",
-          created_at: "2023-01-04",
-        },
-        {
-          id: "5",
-          original_sentence: "test5",
-          corrected_sentence: "test5",
-          explanation: "test5",
-          created_at: "2023-01-05",
-        },
+        createLegacyRow("1", "2023-01-01"),
+        createLegacyRow("2", "2023-01-02"),
+        createLegacyRow("3", "2023-01-03"),
+        createLegacyRow("4", "2023-01-04"),
+        createLegacyRow("5", "2023-01-05"),
       ];
 
       createMockQueryBuilder({
@@ -124,7 +114,7 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
 
       // Assert
       expect(result).toEqual({
-        data: mockData,
+        data: mockData.map(({ encrypted_payload: _encryptedPayload, ...item }) => item),
         pagination: {
           page: 1,
           pageSize: 5,
@@ -168,7 +158,7 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
           capturedRangeMock = vi.fn().mockResolvedValue({ data: [], error: null });
           return {
             select: vi.fn().mockImplementation((fields) => {
-              if (typeof fields === "string" && fields.includes("id") && fields.includes("original_sentence")) {
+              if (fields === "*") {
                 return {
                   eq: vi.fn().mockReturnValue({
                     order: vi.fn().mockReturnValue({
@@ -310,5 +300,98 @@ describe("LearningItemsService - getLearningItems pagination logic", () => {
         expect(result.pagination.totalPages).toBe(expectedTotalPages);
       }
     );
+  });
+});
+
+describe("LearningItemsService - encrypted content", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.defineProperty(globalThis, "crypto", { value: webcrypto, configurable: true });
+  });
+
+  it("writes only encrypted sensitive fields and returns the decrypted item", async () => {
+    const crypto = new SensitiveDataCrypto(ENCRYPTION_KEY);
+    let insertedData: Record<string, unknown> | undefined;
+    const encryptedSupabase = {
+      from: vi.fn(() => ({
+        insert: vi.fn((data) => {
+          insertedData = data;
+          return {
+            select: vi.fn(() => ({
+              single: vi.fn(async () => ({
+                data: {
+                  ...data,
+                  original_sentence: null,
+                  corrected_sentence: null,
+                  explanation: null,
+                  translation: null,
+                  created_at: "2026-07-01T00:00:00.000Z",
+                },
+                error: null,
+              })),
+            })),
+          };
+        }),
+      })),
+    };
+    const service = new LearningItemsService(encryptedSupabase as never, crypto);
+    const command = {
+      original_sentence: "I are learning.",
+      corrected_sentence: "I am learning.",
+      explanation: "Use am with I.",
+      analysis_mode: "grammar_and_spelling",
+      analysis_language: "en",
+      translation: "Uczę się.",
+    };
+
+    const result = await service.createLearningItem(command, "user-123");
+
+    expect(insertedData).toEqual({
+      id: expect.any(String),
+      user_id: "user-123",
+      analysis_mode: "grammar_and_spelling",
+      analysis_language: "en",
+      encrypted_payload: expect.stringMatching(/^enc:v1:/),
+    });
+    expect(JSON.stringify(insertedData)).not.toContain(command.original_sentence);
+    expect(JSON.stringify(insertedData)).not.toContain(command.explanation);
+    expect(result).toMatchObject(command);
+    expect(result.user_id).toBe("user-123");
+  });
+
+  it("rejects a corrupted encrypted payload without returning ciphertext", async () => {
+    const crypto = new SensitiveDataCrypto(ENCRYPTION_KEY);
+    const row = {
+      ...createLegacyRow("1", "2026-07-01T00:00:00.000Z"),
+      original_sentence: null,
+      corrected_sentence: null,
+      explanation: null,
+      encrypted_payload: "enc:v1:invalid:invalid",
+    };
+    let call = 0;
+    const encryptedSupabase = {
+      from: vi.fn(() => {
+        call++;
+        if (call === 1) {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn().mockResolvedValue({ count: 1, error: null }),
+            })),
+          };
+        }
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              order: vi.fn(() => ({
+                range: vi.fn().mockResolvedValue({ data: [row], error: null }),
+              })),
+            })),
+          })),
+        };
+      }),
+    };
+    const service = new LearningItemsService(encryptedSupabase as never, crypto);
+
+    await expect(service.getLearningItems("user-123", 1, 10)).rejects.toThrow(LearningItemsDatabaseError);
   });
 });

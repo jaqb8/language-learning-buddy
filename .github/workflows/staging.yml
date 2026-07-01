@@ -51,6 +51,9 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLIC_KEY: ${{ secrets.SUPABASE_PUBLIC_KEY }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DATA_ENCRYPTION_KEY_V1: ${{ secrets.DATA_ENCRYPTION_KEY_V1 }}
+          CACHE_HMAC_KEY_V1: ${{ secrets.CACHE_HMAC_KEY_V1 }}
           PUBLIC_ENV_NAME: ${{ vars.ENV_NAME }}
           USE_MOCKS: false
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -64,3 +67,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --env=staging
+          environment: staging
+          secrets: |
+            SUPABASE_SECRET_KEY
+            DATA_ENCRYPTION_KEY_V1
+            CACHE_HMAC_KEY_V1
+        env:
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          DATA_ENCRYPTION_KEY_V1: ${{ secrets.DATA_ENCRYPTION_KEY_V1 }}
+          CACHE_HMAC_KEY_V1: ${{ secrets.CACHE_HMAC_KEY_V1 }}

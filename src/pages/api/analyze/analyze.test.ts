@@ -35,6 +35,13 @@ vi.mock("@/lib/services/settings", () => ({
   })),
 }));
 
+vi.mock("@/lib/services/analysis/analysis-cache.factory", () => ({
+  createAnalysisCacheService: vi.fn(() => ({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+  })),
+}));
+
 import { openRouterService } from "@/lib/services/openrouter";
 import { GamificationService } from "@/lib/services/gamification";
 

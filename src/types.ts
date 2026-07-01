@@ -1,4 +1,3 @@
-import type { Database } from "./db/database.types";
 import type { ZodSchema } from "zod";
 import type { AppLocale } from "./lib/i18n";
 
@@ -7,10 +6,20 @@ import type { AppLocale } from "./lib/i18n";
 // ============================================================================
 
 /**
- * Represents a single learning item record from the `learning_items` table.
- * This is the core entity type that other DTOs will be derived from.
+ * Decrypted learning item used by the application boundary.
+ * Sensitive fields are not represented by the raw database row type.
  */
-export type LearningItem = Database["public"]["Tables"]["learning_items"]["Row"];
+export interface LearningItem {
+  id: string;
+  user_id: string;
+  original_sentence: string;
+  corrected_sentence: string;
+  explanation: string;
+  analysis_mode: string;
+  analysis_language: string;
+  translation: string | null;
+  created_at: string;
+}
 
 /**
  * Represents the mode of text analysis.
