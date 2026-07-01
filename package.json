@@ -18,6 +18,7 @@
     "supabase:restart": "supabase restart",
     "supabase:migration:up": "npx supabase migration up --linked",
     "supabase:gen-types": "supabase gen types typescript --local > src/db/database.types.ts",
+    "backfill:learning-items-encryption": "node scripts/backfill-learning-items-encryption.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",

@@ -30,34 +30,31 @@ export interface Database {
           analysis_language: string;
           analysis_mode: string;
           created_at: string;
+          encrypted_result: string;
           hit_count: number;
           id: string;
           last_accessed_at: string;
-          original_text: string;
-          result: Json;
-          text_hash: string;
+          lookup_digest: string;
         };
         Insert: {
           analysis_language?: string;
           analysis_mode: string;
           created_at?: string;
+          encrypted_result: string;
           hit_count?: number;
           id?: string;
           last_accessed_at?: string;
-          original_text: string;
-          result: Json;
-          text_hash: string;
+          lookup_digest: string;
         };
         Update: {
           analysis_language?: string;
           analysis_mode?: string;
           created_at?: string;
+          encrypted_result?: string;
           hit_count?: number;
           id?: string;
           last_accessed_at?: string;
-          original_text?: string;
-          result?: Json;
-          text_hash?: string;
+          lookup_digest?: string;
         };
         Relationships: [];
       };
@@ -86,33 +83,36 @@ export interface Database {
         Row: {
           analysis_language: string;
           analysis_mode: string;
-          corrected_sentence: string;
+          corrected_sentence: string | null;
           created_at: string;
-          explanation: string;
+          encrypted_payload: string | null;
+          explanation: string | null;
           id: string;
-          original_sentence: string;
+          original_sentence: string | null;
           translation: string | null;
           user_id: string;
         };
         Insert: {
           analysis_language?: string;
           analysis_mode?: string;
-          corrected_sentence: string;
+          corrected_sentence?: string | null;
           created_at?: string;
-          explanation: string;
+          encrypted_payload?: string | null;
+          explanation?: string | null;
           id?: string;
-          original_sentence: string;
+          original_sentence?: string | null;
           translation?: string | null;
           user_id: string;
         };
         Update: {
           analysis_language?: string;
           analysis_mode?: string;
-          corrected_sentence?: string;
+          corrected_sentence?: string | null;
           created_at?: string;
-          explanation?: string;
+          encrypted_payload?: string | null;
+          explanation?: string | null;
           id?: string;
-          original_sentence?: string;
+          original_sentence?: string | null;
           translation?: string | null;
           user_id?: string;
         };
@@ -172,8 +172,8 @@ export interface Database {
         }[];
       };
       get_cached_analysis: {
-        Args: { p_language: string; p_mode: string; p_text_hash: string };
-        Returns: Json;
+        Args: { p_language: string; p_lookup_digest: string; p_mode: string };
+        Returns: string;
       };
       get_anonymous_quota_status: {
         Args: { p_ip_hash: string; p_usage_date: string };
@@ -200,11 +200,10 @@ export interface Database {
       reset_analysis_stats: { Args: never; Returns: undefined };
       set_cached_analysis: {
         Args: {
+          p_encrypted_result: string;
           p_language: string;
+          p_lookup_digest: string;
           p_mode: string;
-          p_original_text: string;
-          p_result: Json;
-          p_text_hash: string;
         };
         Returns: undefined;
       };

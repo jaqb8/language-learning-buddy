@@ -1,11 +1,21 @@
 import type { SupabaseClient } from "../../../db/supabase.client";
 import type { AnalysisLanguage, AnalysisMode, TextAnalysisDto } from "../../../types";
 import type { AppLocale } from "@/lib/i18n";
+import {
+  analysisCacheAad,
+  type CacheLookupHmac,
+  SensitiveDataDecryptionError,
+  type SensitiveDataCrypto,
+} from "@/lib/crypto/sensitive-data.crypto";
 
 const ANALYSIS_CACHE_VERSION = "v5";
 
 export class AnalysisCacheService {
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(
+    private readonly supabase: SupabaseClient,
+    private readonly sensitiveDataCrypto: SensitiveDataCrypto,
+    private readonly cacheLookupHmac: CacheLookupHmac
+  ) {}
 
   async get(
     text: string,
@@ -13,26 +23,17 @@ export class AnalysisCacheService {
     language: AnalysisLanguage,
     explanationLocale: AppLocale
   ): Promise<TextAnalysisDto | null> {
-    let textHash: string | null = null;
-    try {
-      textHash = await this.hashText(text);
-    } catch (error) {
-      console.error("Cache hashing failed:", error);
-      return null;
-    }
-
-    if (!textHash) {
-      return null;
-    }
+    const lookupDigest = await this.createLookupDigest(text);
+    const versionedMode = this.getVersionedMode(mode, explanationLocale);
 
     const { data, error } = await this.supabase.rpc("get_cached_analysis", {
-      p_text_hash: textHash,
-      p_mode: this.getVersionedMode(mode, explanationLocale),
+      p_lookup_digest: lookupDigest,
+      p_mode: versionedMode,
       p_language: language,
     });
 
     if (error) {
-      console.error("Cache error in getCachedAnalysis:", error);
+      console.error("Cache lookup RPC failed:", error.code ?? "unknown");
       return null;
     }
 
@@ -40,7 +41,18 @@ export class AnalysisCacheService {
       return null;
     }
 
-    return data as TextAnalysisDto;
+    try {
+      return await this.sensitiveDataCrypto.decryptJson<TextAnalysisDto>(
+        data,
+        analysisCacheAad(lookupDigest, versionedMode, language)
+      );
+    } catch (error) {
+      console.error(
+        "Cached analysis decryption failed:",
+        error instanceof SensitiveDataDecryptionError ? error.message : "unknown"
+      );
+      return null;
+    }
   }
 
   async set(
@@ -50,61 +62,30 @@ export class AnalysisCacheService {
     explanationLocale: AppLocale,
     result: TextAnalysisDto
   ): Promise<void> {
-    let textHash: string | null = null;
-    try {
-      textHash = await this.hashText(text);
-    } catch (error) {
-      console.error("Cache hashing failed:", error);
-      return;
-    }
+    const lookupDigest = await this.createLookupDigest(text);
+    const versionedMode = this.getVersionedMode(mode, explanationLocale);
+    const encryptedResult = await this.sensitiveDataCrypto.encryptJson(
+      result,
+      analysisCacheAad(lookupDigest, versionedMode, language)
+    );
 
-    if (!textHash) {
-      return;
-    }
-
-    const normalizedText = text.trim();
     const { error } = await this.supabase.rpc("set_cached_analysis", {
-      p_text_hash: textHash,
-      p_mode: this.getVersionedMode(mode, explanationLocale),
+      p_lookup_digest: lookupDigest,
+      p_mode: versionedMode,
       p_language: language,
-      p_original_text: normalizedText,
-      p_result: result,
+      p_encrypted_result: encryptedResult,
     });
 
     if (error) {
-      console.error("Cache error in setCachedAnalysis:", error);
+      console.error("Cache save RPC failed:", error.code ?? "unknown");
     }
   }
 
-  private async hashText(text: string): Promise<string | null> {
-    const normalizedText = text.trim();
-    const encodedText = new TextEncoder().encode(normalizedText);
-    const webCrypto = await this.getWebCrypto();
-    if (!webCrypto) {
-      return null;
-    }
-
-    const hashBuffer = await webCrypto.subtle.digest("SHA-256", encodedText);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-    return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  private createLookupDigest(text: string): Promise<string> {
+    return this.cacheLookupHmac.digest(text.trim());
   }
 
   private getVersionedMode(mode: AnalysisMode, explanationLocale: AppLocale): string {
     return `${mode}:${ANALYSIS_CACHE_VERSION}:explanation-${explanationLocale}`;
-  }
-
-  private async getWebCrypto(): Promise<Crypto | null> {
-    if (globalThis.crypto?.subtle) {
-      return globalThis.crypto;
-    }
-
-    try {
-      const { webcrypto } = await import("node:crypto");
-      return webcrypto as Crypto;
-    } catch (error) {
-      console.error("WebCrypto unavailable:", error);
-      return null;
-    }
   }
 }
